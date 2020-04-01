@@ -170,7 +170,8 @@ public class TableController
 			{
 		    	logger.error(String.format("There are only %s seated players at table with id %s, so cards will not be dealt ",table.getAllSeatedPlayers().size(),tableId));
 			    messagingTemplate.convertAndSend("/topic/errors",
-		    		String.format("There are only %s seated players at table with id %s, so cards will not be dealt ",table.getAllSeatedPlayers().size(),tableId));	    					
+		    		String.format("There are only %s seated players at table with id %s, so cards will not be dealt ",table.getAllSeatedPlayers().size(),tableId));
+			    return;
 			}
 			if (table.getCurrentDealer() == null)
 			{
