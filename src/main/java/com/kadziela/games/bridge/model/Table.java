@@ -43,8 +43,8 @@ public class Table
 		List<Card> shuffledDeck = getDeck().getShuffled();
 		
 		players.get(SeatPosition.NORTH).takeNewCards(shuffledDeck.subList(0, 13));
-		players.get(SeatPosition.EAST).takeNewCards(shuffledDeck.subList(0, 13));
-		players.get(SeatPosition.SOUTH).takeNewCards(shuffledDeck.subList(0, 13));
-		players.get(SeatPosition.WEST).takeNewCards(shuffledDeck.subList(0, 13));
+		players.get(SeatPosition.EAST).takeNewCards(shuffledDeck.subList(13, 26));
+		players.get(SeatPosition.SOUTH).takeNewCards(shuffledDeck.subList(26, 39));
+		players.get(SeatPosition.WEST).takeNewCards(shuffledDeck.subList(39, 52));
 	}
 }
