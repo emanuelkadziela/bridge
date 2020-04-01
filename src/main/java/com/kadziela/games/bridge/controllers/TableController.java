@@ -20,6 +20,10 @@ import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.service.RoomService;
 import com.kadziela.games.bridge.service.TableService;
 
+/**
+ * @author Emanuel M. Kadziela
+ *	A websocket controller for managing a contract bridge table.
+ */
 @Controller
 public class TableController 
 {
@@ -31,7 +35,7 @@ public class TableController
 	
 	/**
 	 * Opens a new table
-	 * @return a collection of the currently extant tables
+	 * @return a collection of the currently extant tables, on the /topic/room destination
 	 */
 	@MessageMapping("/table/openNew")
 	@SendTo("/topic/room")
@@ -41,6 +45,10 @@ public class TableController
 		tableService.create();
 		return tableService.getAllTables();
 	}
+	/**
+	 * Returns a collection of all tables in the room, sending it to the /topic/room destination
+	 * @return a collection of all tables in the room
+	 */
 	@MessageMapping("/table/getAll")
 	@SendTo("/topic/room")
 	public Collection<Table> getAll()
@@ -49,8 +57,10 @@ public class TableController
 		return tableService.getAllTables();
 	}
 	/**
-	 * given a name of a Player who is in the room, the id of a table in the room, and a position, this method will attempt to sit the player down at the
-	 * given position at the given table, validating that there is no one already sitting in that seat 
+	 * Given a name of a Player who is in the room, the id of a table in the room, and a position, this method will attempt to sit the player down at the
+	 * given position at the given table, validating that there is no one already sitting in that seat. It will then publish a message to /queue/private/<playerName>,
+	 * telling them they have been successfully sat down, and it will publish a similar message to the /topic/table/<tableId> destination.
+	 * Any errors will result in messages published to the /topic/errors destination. 
 	 * @param attributes - the map of attributes, must contain a player, a position and a table (at least). 
 	 * The keys are as follows: playerName, tableId, position
 	 */
@@ -100,6 +110,7 @@ public class TableController
 	/**
 	 * given a name of a Player who is in the room, the id of a table in the room, and a position, this method will attempt to stand the player up from the
 	 * given position at the given table, validating that there is in fact that player in that position 
+	 * Any errors will result in messages published to the /topic/errors destination. 
 	 * @param attributes - the map of attributes, must contain a player, a position and a table (at least). 
 	 * The keys are as follows: playerName, tableId, position
 	 */
@@ -144,6 +155,7 @@ public class TableController
 	 * Given the id of a table in the room, this method will validate that there are 4 players sitting and deal the cards. 
 	 * The first dealer is selected by dealing a card face up to every player; the player with the highest card becomes the first dealer.
 	 * Afterwards, the dealer moves clockwise around the table.
+	 * Any errors will result in messages published to the /topic/errors destination. 
 	 * @param tableId the id of the table where the dealing is to take place 
 	 */
 	@MessageMapping("/table/deal")
