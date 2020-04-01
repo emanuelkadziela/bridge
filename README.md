@@ -10,3 +10,6 @@ From the same directory, you can now run java -jar target/bridge-0.0.1-SNAPSHOT.
 and watch the server start up.
 
 Navigate to locahost:8080 and you should be looking at what we built so far.
+
+Run mvn javadoc:javadoc to generate JavaDocs, which you can find under target/site/apidocs/index.html once generated. 
+(I will try to document more and better, so these will have more information over time).
