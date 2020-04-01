@@ -18,7 +18,7 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 @Configuration
 @EnableWebSocketMessageBroker
-@ComponentScan("com.kadziela.games.bridge.service")
+@ComponentScan("com.kadziela.games.bridge")
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer 
 {
 	@Override
@@ -29,7 +29,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer
 
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
-		registry.addEndpoint("/kadziela-bridge-websocket").withSockJS();
+		registry.addEndpoint("/kadziela-bridge-websocket").setAllowedOrigins("*").withSockJS();
 	}
 
 //	@Override 

@@ -32,11 +32,6 @@ function connect()
         {
             console.log('Error Message: '+message);
         });
-		stompClient.subscribe('/user/queue/private', function (message) 
-		{
-		    console.log('Message on the user queue: '+message);
-		    alert('Message on the user queue: '+message);
-		});	
     });
 }
 
@@ -52,10 +47,6 @@ function sendName() {stompClient.send("/app/chat", {}, JSON.stringify({'content'
 function enterRoom() 
 {
 	var playerName = $("#playerName").val();
-    stompClient.subscribe('/user/'+playerName+'/queue/private', function (message) 
-    {
-        console.log('Message on the user queue: '+message);
-    });	
     stompClient.subscribe('/queue/private/'+playerName, function (message) 
     {
         console.log('Message on the user queue: '+message);
@@ -77,7 +68,24 @@ function showPlayer(player)
 	console.log("Player: "+player);
 	$("#players").append("<tr><td>" + player.name + "</td></tr>");
 }
-
+function subscribe()
+{
+	var destination = $("#destination").val();
+    stompClient.subscribe(destination, function (message) 
+    {
+        console.log('Message on the '+destination+': '+message);
+    });		
+    $("#destination").html("");    
+}
+function invoke()
+{
+	var path = $("#path").val();
+	var vars = $("#vars").val();
+    console.log('Invoking path: '+path+' with vars: '+vars);
+    stompClient.send(path, {}, vars);
+    $("#path").html("");    
+    $("#vars").html("");    
+}
 
 $(function () 
 {
@@ -85,5 +93,7 @@ $(function ()
     $( "#connect" ).click(function() { connect(); });
     $( "#disconnect" ).click(function() { disconnect(); });
     $( "#send" ).click(function() { sendName(); });
-    $( "#enterRoom" ).click(function() { enterRoom(); });    
+    $( "#enterRoom" ).click(function() { enterRoom(); });
+    $( "#invoke" ).click(function() { invoke(); });            
+    $( "#subscribe" ).click(function() { subscribe(); });            
 });
