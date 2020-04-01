@@ -39,11 +39,11 @@ public class TableController
 	 */
 	@MessageMapping("/table/openNew")
 	@SendTo("/topic/room")
-	public Collection<Table> openNew()
+	public Long openNew()
 	{
 		logger.debug("opening a new table");
-		tableService.create();
-		return tableService.getAllTables();
+		Table table = tableService.create();
+		return table.getId();
 	}
 	/**
 	 * Returns a collection of all tables in the room, sending it to the /topic/room destination
@@ -76,7 +76,7 @@ public class TableController
 			Assert.notNull(attributes,"the input attributes canot be null");
 	    	playerName = attributes.get("playerName");
 	    	tableId = attributes.get("tableId");
-	    	position = attributes.get("playerName");
+	    	position = attributes.get("position");
 	    	Assert.notNull(playerName, "the playerName must be passed in the attribute map");
 	    	Assert.notNull(tableId, "the tableId must be passed in the attribute map");
 	    	Assert.notNull(position, "the position must be passed in the attribute map");
@@ -166,6 +166,12 @@ public class TableController
 		try
 		{
 			Assert.notNull(table, String.format("Cannot find any existing tables for table id %s",tableId));
+			if (table.getAllSeatedPlayers().size() < 4)
+			{
+		    	logger.error(String.format("There are only %s seated players at table with id %s, so cards will not be dealt ",table.getAllSeatedPlayers().size(),tableId));
+			    messagingTemplate.convertAndSend("/topic/errors",
+		    		String.format("There are only %s seated players at table with id %s, so cards will not be dealt ",table.getAllSeatedPlayers().size(),tableId));	    					
+			}
 			if (table.getCurrentDealer() == null)
 			{
 				logger.debug(String.format("dealing at table %s for the first time, choosing the first dealer ... ", table));
