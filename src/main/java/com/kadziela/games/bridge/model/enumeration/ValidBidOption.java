@@ -1,5 +1,7 @@
 package com.kadziela.games.bridge.model.enumeration;
 
+import java.util.List;
+
 public enum ValidBidOption 
 {
 	ONE_CLUBS, ONE_DIAMONDS, ONE_HEARTS, ONE_SPADES, ONE_NO_TRUMP,
@@ -11,49 +13,74 @@ public enum ValidBidOption
 	SEVEN_CLUBS, SEVEN_DIAMONDS, SEVEN_HEARTS, SEVEN_SPADES, SEVEN_NO_TRUMP,
 	DOUBLE, REDOUBLE, PASS;
 	
-	public static boolean validBid(ValidBidOption candidate, ValidBidOption previous, ValidBidOption preprevious, ValidBidOption prepreprevious)
+	/**
+	 * Determines if the given bid is valid in the context of previous bids. 
+	 * The rules are as follows (more detailed in the comments throughout the code):
+	 * 
+	 * 1. A pass is always valid
+	 * 2. The first non-pass bid is always valid, unless it is a double or a redouble
+	 * 3. A normal (not dbl, rdbl, or pass) bid that is higher than the last normal bid (regardless of what happened in between) is also valid
+	 * 4. A double can only follow a normal bid from an opponent. If it is the left-hand opponent, a double is only valid if my partner passed.
+	 * 5. A redouble can only follow a double from from one of my opponents. If it is the left-hand opponent, a redouble is only valid if my partner passed.
+	 * 
+	 * @param candidate - the bid in question
+	 * @param prior a list of prior bids (can be null or empty)
+	 * @return true if the candidate bid is valid and false otherwise
+	 */
+	public static boolean validBid(ValidBidOption candidate, List<ValidBidOption> prior)
 	{
 		//pass is always valid
 		if (candidate.equals(ValidBidOption.PASS)) return true;
-		//the first bid is always valid, unless it is a double or a redouble
-		if (previous == null)
+		//the first non-pass bid is always valid, unless it is a double or a redouble
+		if (prior == null || prior.isEmpty() || lastNormal(prior) == null)
 		{
 			if (candidate.equals(DOUBLE) || candidate.equals(REDOUBLE)) return false;
 			return true;
 		}
-		//higher bid is always valid, and double is always valid (pass is higher ordinal in this enum, so double following a pass will get caught by that check), 
-		//but a redouble can only follow a double
-		if (candidate.ordinal() > previous.ordinal())
+		//a normal (not dbl, rdbl, or pass) bid that is higher than the last normal bid (regardless of what happened in between) is also valid
+		//we already checked that the candidate is not a pass and not a first non-pass bid
+		if (!candidate.equals(DOUBLE) && !candidate.equals(REDOUBLE))
 		{
-			if(candidate.equals(REDOUBLE) && !previous.equals(DOUBLE)) return false;				
-			return true;
+			if (candidate.ordinal() > lastNormal(prior).ordinal()) return true;			
 		}
-		
-		
-		//if we got to here, it means that the candidate bid is lower than the previous bid, 
-		//so we just have to deal with a few edge cases around doubles, redoubles, and passes, and most likely the bid is invalid
-		
-		
-		//if this is the second bid, it must just be higher than the previous one, which will be correctly resolved above (but I still have to avoid the NPE)
-		if(preprevious == null) return true;
-		//however, if it is the third bid or higher, and the previous bid is a double, the candidate cannot be a double and must be higher than the bid before previous
-		if(previous.equals(DOUBLE))
+		//A double can only follow a normal bid from an opponent. If it is the left-hand opponent, a double is only valid if my partner passed.
+		if (candidate.equals(DOUBLE))
 		{
-			//can't double a double
-			if (candidate.equals(DOUBLE)) return false;
-			//the candidate must be higher than the bid before the double
-			return candidate.ordinal() > preprevious.ordinal();
+			//normal bid from my right-hand opponent, double is valid
+			if (prior.get(0).ordinal() < DOUBLE.ordinal()) return true;
+			//not enough prior bids to have a normal one from the left-hand opponent, so double is invalid (this would happen in the case when only my partner and right-hand opponent bid so far)
+			if (prior.size() < 3) return false;
+			//normal bid from my left-hand opponent
+			if (prior.get(2).ordinal() < DOUBLE.ordinal())
+			{
+				//my partner passed, so double is valid
+				if (prior.get(1).equals(PASS)) return true;
+			}
 		}
-		//if this is the third bid, it must just be higher than the previous one, which will be correctly resolved above (but I still have to protect against accessing a null object)
-		if (prepreprevious == null) return true;
-		//if it is the fourth bid or higher, and the previous bid is a redouble, than this bid must be higher than the prepreprevious bid
-		if (previous.equals(REDOUBLE))
+		//A redouble can only follow a double from from one of my opponents. If it is the left-hand opponent, a redouble is only valid if my partner passed.
+		if (candidate.equals(REDOUBLE))
 		{
-			//can't double or redouble a redouble
-			if (candidate.equals(DOUBLE) || candidate.equals(REDOUBLE)) return false;
-			//the candidate must be higher than the bid before the bid before the redouble
-			return candidate.ordinal() > prepreprevious.ordinal();
+			//double from my right-hand opponent, double is valid
+			if (prior.get(0).equals(DOUBLE)) return true;
+			//not enough prior bids to have a double from the left-hand opponent, so redouble is invalid (this would happen in the case when only my partner and right-hand opponent bid so far)
+			if (prior.size() < 3) return false;
+			//double from my left-hand opponent
+			if (prior.get(2).equals(DOUBLE))
+			{
+				//my partner passed, so redouble is valid
+				if (prior.get(1).equals(PASS)) return true;
+			}
 		}
+		//anything else should be invalid
 		return false;
+	}
+	private static ValidBidOption lastNormal(List<ValidBidOption> prior)
+	{
+		if(prior == null || prior.isEmpty()) return null;
+		for(ValidBidOption vbo:prior)
+		{
+			if (vbo.ordinal() < DOUBLE.ordinal()) return vbo;
+		}
+		return null;
 	}
 }

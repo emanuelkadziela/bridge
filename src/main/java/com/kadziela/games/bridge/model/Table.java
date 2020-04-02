@@ -1,16 +1,20 @@
 package com.kadziela.games.bridge.model;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 
 public class Table 
 {	
 	private final Long id = System.currentTimeMillis();
-	private final Map<SeatPosition,SeatedPlayer> players = new ConcurrentHashMap<SeatPosition, SeatedPlayer>();
+	private final Map<SeatPosition,SeatedPlayer> players = new ConcurrentHashMap<>();
+	private final List<Bid> bids = new CopyOnWriteArrayList<>();
 	private final Deck deck = new Deck();
 	private SeatedPlayer currentDealer;
 	
@@ -37,7 +41,9 @@ public class Table
 		SeatedPlayer p = players.remove(sp);
 	}
 	public SeatedPlayer getPlayerAtPosition(SeatPosition sp) {return players.get(sp);}
-	public Collection<SeatedPlayer> getAllSeatedPlayers(){return new HashSet<SeatedPlayer> (players.values());}
+	public Collection<SeatedPlayer> getAllSeatedPlayers(){return new HashSet<> (players.values());}
+	public List<Bid> getCurrentBids() {return new ArrayList<>(bids);}
+	public void addValidatedBid(Bid validatedBid) {bids.add(validatedBid);}
 	public void deal()
 	{
 		List<Card> shuffledDeck = getDeck().getShuffled();
