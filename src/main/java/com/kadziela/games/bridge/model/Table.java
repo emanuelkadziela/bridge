@@ -18,6 +18,7 @@ public class Table
 	private final List<Bid> bids = new CopyOnWriteArrayList<>();
 	private final Deck deck = new Deck();
 	private SeatedPlayer currentDealer;
+	private Contract currentContract;
 	
 	public Long getId() {return id;}	
 	public Deck getDeck() {return deck;}
@@ -59,5 +60,10 @@ public class Table
 		players.get(SeatPosition.EAST).takeNewCards(shuffledDeck.subList(13, 26));
 		players.get(SeatPosition.SOUTH).takeNewCards(shuffledDeck.subList(26, 39));
 		players.get(SeatPosition.WEST).takeNewCards(shuffledDeck.subList(39, 52));
+	}
+	public Contract createNewContract()
+	{
+		currentContract = new Contract(getCurrentBids());
+		return currentContract;
 	}
 }

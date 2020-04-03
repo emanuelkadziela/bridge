@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 
 import com.kadziela.games.bridge.model.Bid;
+import com.kadziela.games.bridge.model.Contract;
 import com.kadziela.games.bridge.model.SeatedPlayer;
 import com.kadziela.games.bridge.model.Table;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
@@ -65,7 +66,8 @@ public class ContractController
 			{
 				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),"The last bid was a fourth pass, redeal");		    		
 			}
-			messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),table.getCurrentBids());		    					
+			Contract contract = table.createNewContract();
+			messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),contract);		    					
 	    }
 	    catch (IllegalArgumentException iae)
 	    {
