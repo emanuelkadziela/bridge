@@ -12,8 +12,7 @@ public class CardComparatorBySuitThenRank implements Comparator<Card>
 			return 0;
 		}
 		return ComparisonUtils.nullSafeCompare(c1.getSuit(), c2.getSuit()) != 0 ? ComparisonUtils.nullSafeCompare(c1.getSuit(), c2.getSuit()) :
-				ComparisonUtils.nullSafeCompare(c1.getRank(), c2.getRank()) != 0 ? ComparisonUtils.nullSafeCompare(c1.getRank(), c2.getRank()) : 
-				ComparisonUtils.nullSafeCompare(c1.getId(), c2.getId());
+				ComparisonUtils.nullSafeCompare(c1.getRank(), c2.getRank());
 
 	}
 }
