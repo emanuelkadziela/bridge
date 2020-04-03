@@ -59,14 +59,13 @@ public class ContractController
 			Bid b = contractService.bid(seatedPlayer, vbo, table);
 			if (contractMade(table))
 			{
-				//signal contract made
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),"The last bid was a third pass, the contract has been made");		    		
 			}
 			if (redeal(table))
 			{
-				//signal redeal
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),"The last bid was a fourth pass, redeal");		    		
 			}
-			//publish the contract
-			
+			messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),table.getCurrentBids());		    					
 	    }
 	    catch (IllegalArgumentException iae)
 	    {
@@ -85,19 +84,19 @@ public class ContractController
 	private boolean contractMade(Table table)
 	{
 		if (table.getCurrentBidOptions().size() > 2 &&
-			table.getCurrentBidOptions().get(0).equals(ValidBidOption.PASS) && 
-			table.getCurrentBidOptions().get(1).equals(ValidBidOption.PASS) && 
-			table.getCurrentBidOptions().get(2).equals(ValidBidOption.PASS)) 		
+			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-1).equals(ValidBidOption.PASS) && 
+			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-2).equals(ValidBidOption.PASS) && 
+			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-3).equals(ValidBidOption.PASS)) 		
 			return true;		
 		return false;
 	}
 	private boolean redeal(Table table)
 	{
 		if (table.getCurrentBidOptions().size() == 3 &&
-			table.getCurrentBidOptions().get(0).equals(ValidBidOption.PASS) && 
-			table.getCurrentBidOptions().get(1).equals(ValidBidOption.PASS) && 
-			table.getCurrentBidOptions().get(2).equals(ValidBidOption.PASS) &&
-			table.getCurrentBidOptions().get(3).equals(ValidBidOption.PASS)) 		
+			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-1).equals(ValidBidOption.PASS) && 
+			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-2).equals(ValidBidOption.PASS) && 
+			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-3).equals(ValidBidOption.PASS) &&
+			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-4).equals(ValidBidOption.PASS)) 		
 			return true;		
 		return false;
 	}
