@@ -74,6 +74,16 @@ public enum ValidBidOption
 		//anything else should be invalid
 		return false;
 	}
+	public static BidSuit getSuit(ValidBidOption bid)
+	{
+		if (bid.ordinal() >= DOUBLE.ordinal()) return null;
+		return BidSuit.values()[bid.ordinal() % 5];
+	}
+	public static int getLevel(ValidBidOption bid)
+	{
+		if (bid.ordinal() >= DOUBLE.ordinal()) return 0;
+		return bid.ordinal() / 5 + 1;
+	}
 	private static ValidBidOption lastNormal(List<ValidBidOption> prior)
 	{
 		if(prior == null || prior.isEmpty()) return null;
@@ -82,5 +92,5 @@ public enum ValidBidOption
 			if (vbo.ordinal() < DOUBLE.ordinal()) return vbo;
 		}
 		return null;
-	}
+	}	
 }

@@ -9,4 +9,8 @@ public enum SeatPosition
 		if(currentBidder.equals(WEST)) return NORTH;
 		return SeatPosition.values()[currentBidder.ordinal()+1];
 	}
+	public static SeatPosition getPartner(SeatPosition position)
+	{
+		return SeatPosition.values()[(position.ordinal() + 2) % 4];
+	}
 }
