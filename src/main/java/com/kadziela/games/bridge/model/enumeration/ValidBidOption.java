@@ -87,8 +87,9 @@ public enum ValidBidOption
 	private static ValidBidOption lastNormal(List<ValidBidOption> prior)
 	{
 		if(prior == null || prior.isEmpty()) return null;
-		for(ValidBidOption vbo:prior)
+		for(int i=prior.size()-1; i > -1; i--)
 		{
+			ValidBidOption vbo = prior.get(i);
 			if (vbo.ordinal() < DOUBLE.ordinal()) return vbo;
 		}
 		return null;
