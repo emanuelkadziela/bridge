@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
+import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 
 public class Table 
 {	
@@ -44,6 +45,12 @@ public class Table
 	public Collection<SeatedPlayer> getAllSeatedPlayers(){return new HashSet<> (players.values());}
 	public List<Bid> getCurrentBids() {return new ArrayList<>(bids);}
 	public void addValidatedBid(Bid validatedBid) {bids.add(validatedBid);}
+	public synchronized List<ValidBidOption> getCurrentBidOptions()
+	{
+		List<ValidBidOption> options = new ArrayList<ValidBidOption>();
+		for (Bid b:bids) options.add(b.getBid());
+		return options;
+	}
 	public void deal()
 	{
 		List<Card> shuffledDeck = getDeck().getShuffled();

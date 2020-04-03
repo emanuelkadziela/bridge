@@ -1,6 +1,7 @@
 package com.kadziela.games.bridge.controllers;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 
+import com.kadziela.games.bridge.model.Bid;
 import com.kadziela.games.bridge.model.SeatedPlayer;
 import com.kadziela.games.bridge.model.Table;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
@@ -54,7 +56,17 @@ public class ContractController
 			SeatPosition sp = SeatPosition.valueOf(position);
 			ValidBidOption vbo = ValidBidOption.valueOf(bid);
 			SeatedPlayer seatedPlayer = table.getPlayerAtPosition(sp);
-			contractService.bid(seatedPlayer, vbo, table);
+			Bid b = contractService.bid(seatedPlayer, vbo, table);
+			if (contractMade(table))
+			{
+				//signal contract made
+			}
+			if (redeal(table))
+			{
+				//signal redeal
+			}
+			//publish the contract
+			
 	    }
 	    catch (IllegalArgumentException iae)
 	    {
@@ -69,5 +81,24 @@ public class ContractController
 	    		String.format("An IllegalStateException occurred while trying to bid %s at table %s and position %s. The error message is: %s",bid,tableId,position,ise.getMessage()));	    	
 	    }	    
 
+	}
+	private boolean contractMade(Table table)
+	{
+		if (table.getCurrentBidOptions().size() > 2 &&
+			table.getCurrentBidOptions().get(0).equals(ValidBidOption.PASS) && 
+			table.getCurrentBidOptions().get(1).equals(ValidBidOption.PASS) && 
+			table.getCurrentBidOptions().get(2).equals(ValidBidOption.PASS)) 		
+			return true;		
+		return false;
+	}
+	private boolean redeal(Table table)
+	{
+		if (table.getCurrentBidOptions().size() == 3 &&
+			table.getCurrentBidOptions().get(0).equals(ValidBidOption.PASS) && 
+			table.getCurrentBidOptions().get(1).equals(ValidBidOption.PASS) && 
+			table.getCurrentBidOptions().get(2).equals(ValidBidOption.PASS) &&
+			table.getCurrentBidOptions().get(3).equals(ValidBidOption.PASS)) 		
+			return true;		
+		return false;
 	}
 }
