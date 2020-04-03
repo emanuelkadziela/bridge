@@ -47,28 +47,28 @@ public enum ValidBidOption
 		if (candidate.equals(DOUBLE))
 		{
 			//normal bid from my right-hand opponent, double is valid
-			if (prior.get(0).ordinal() < DOUBLE.ordinal()) return true;
+			if (prior.get(prior.size()-1).ordinal() < DOUBLE.ordinal()) return true;
 			//not enough prior bids to have a normal one from the left-hand opponent, so double is invalid (this would happen in the case when only my partner and right-hand opponent bid so far)
 			if (prior.size() < 3) return false;
 			//normal bid from my left-hand opponent
-			if (prior.get(2).ordinal() < DOUBLE.ordinal())
+			if (prior.get(prior.size()-3).ordinal() < DOUBLE.ordinal())
 			{
 				//my partner passed, so double is valid
-				if (prior.get(1).equals(PASS)) return true;
+				if (prior.get(prior.size()-2).equals(PASS)) return true;
 			}
 		}
 		//A redouble can only follow a double from from one of my opponents. If it is the left-hand opponent, a redouble is only valid if my partner and the right hand opponent both passed.
 		if (candidate.equals(REDOUBLE))
 		{
 			//double from my right-hand opponent, redouble is valid
-			if (prior.get(0).equals(DOUBLE)) return true;
+			if (prior.get(prior.size()-1).equals(DOUBLE)) return true;
 			//not enough prior bids to have a double from the left-hand opponent, so redouble is invalid (this would happen in the case when only my partner and right-hand opponent bid so far)
 			if (prior.size() < 3) return false;
 			//double from my left-hand opponent
-			if (prior.get(2).equals(DOUBLE))
+			if (prior.get(prior.size()-3).equals(DOUBLE))
 			{
 				//my partner and the right hand opponent both passed, so redouble is valid
-				if (prior.get(1).equals(PASS) && prior.get(0).equals(PASS)) return true;
+				if (prior.get(prior.size()-2).equals(PASS) && prior.get(prior.size()-1).equals(PASS)) return true;
 			}
 		}
 		//anything else should be invalid

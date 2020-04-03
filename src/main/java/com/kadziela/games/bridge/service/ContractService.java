@@ -34,7 +34,7 @@ public class ContractService
 			table.addValidatedBid(b);
 			return b;
 		}
-		SeatPosition lastBidder = table.getCurrentBids().get(0).getSeatedPlayer().getPosition();
+		SeatPosition lastBidder = table.getCurrentBids().get(table.getCurrentBids().size()-1).getSeatedPlayer().getPosition();
 		if (!seatedPlayer.getPosition().equals(SeatPosition.nextBidder(lastBidder)))
 		{
 			throw new IllegalStateException(String.format("The last position who bid was %s. The next should be %s, not %s",lastBidder,SeatPosition.nextBidder(lastBidder),seatedPlayer.getPosition()));
