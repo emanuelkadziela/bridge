@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import com.kadziela.games.bridge.model.Player;
 import com.kadziela.games.bridge.service.RoomService;
+import com.kadziela.games.bridge.util.MapUtil;
 
 @Controller
 public class RoomController 
@@ -38,7 +39,8 @@ public class RoomController
 	    catch (IllegalArgumentException iae)
 	    {
 	    	logger.error("Unable to create a new player with username: "+ name+", because that name is already in use ", iae);
-		    messagingTemplate.convertAndSend("/topic/errors","Unable to create a new player with username: "+ name+", because that name is already in use ");	    	
+		    messagingTemplate.convertAndSend("/topic/errors",
+	    		MapUtil.mappifyStringMessage(String.format("Unable to create a new player with username: %s, because that name is already in use ",name)));	    	
 	    }	    
 	    return roomService.getPlayers();
 	}
