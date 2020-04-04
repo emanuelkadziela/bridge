@@ -86,7 +86,8 @@ public class TableController
 	    	Assert.notNull(player,String.format("Player named %s is not in the room",playerName));
 	    	Table table = tableService.sitDown(player, Long.valueOf(tableId), SeatPosition.valueOf(position));
 	    	
-	    	messagingTemplate.convertAndSend("/queue/private/"+playerName, String.format("you have successfully sat down at table %s in position %s",tableId,position));
+	    	messagingTemplate.convertAndSend("/queue/private/"+playerName, MapUtil.mappifyStringMessage( 
+    			String.format("you have successfully sat down at table %s in position %s",tableId,position)));
 
     		Map<String,String> response = MapUtil.mappifyStringMessage(String.format("player %s has successfully sat down at table %s in position %s",playerName,tableId,position));
     		response.put("playerName", playerName);
@@ -103,14 +104,14 @@ public class TableController
 	    catch (IllegalArgumentException iae)
 	    {
 	    	logger.error(String.format("An IllegalArgumentException occurred while trying to sit player %s at table %s and position %s ",playerName,tableId,position),iae);
-		    messagingTemplate.convertAndSend("/topic/errors",
-		    		String.format("An IllegalArgumentException occurred while trying to sit player %s at table %s and position %s. The error message is: %s",playerName,tableId,position,iae.getMessage()));	    	
+		    messagingTemplate.convertAndSend("/topic/errors", MapUtil.mappifyStringMessage(
+	    		String.format("An IllegalArgumentException occurred while trying to sit player %s at table %s and position %s. The error message is: %s",playerName,tableId,position,iae.getMessage())));	    	
 	    }	    
 	    catch (IllegalStateException ise)
 	    {
 	    	logger.error(String.format("An IllegalStateException occurred while trying to sit player %s at table %s and position %s ",playerName,tableId,position),ise);
-		    messagingTemplate.convertAndSend("/topic/errors",
-	    		String.format("An IllegalStateException occurred while trying to sit player %s at table %s and position %s. The error message is: %s",playerName,tableId,position,ise.getMessage()));	    	
+		    messagingTemplate.convertAndSend("/topic/errors",MapUtil.mappifyStringMessage(
+	    		String.format("An IllegalStateException occurred while trying to sit player %s at table %s and position %s. The error message is: %s",playerName,tableId,position,ise.getMessage())));	    	
 	    }	    
 	}
 	/**
@@ -141,20 +142,22 @@ public class TableController
 	    	Assert.notNull(player,String.format("Player named %s is not in the room",playerName));
 	    	tableService.standUp(player, Long.valueOf(tableId), SeatPosition.valueOf(position));
 	    	
-	    	messagingTemplate.convertAndSend("/queue/private/"+playerName, String.format("you have successfully stood up from table %s and position %s",tableId,position));
-	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, String.format("player %s has successfully stood up from table %s in position %s",playerName,tableId,position));
+	    	messagingTemplate.convertAndSend("/queue/private/"+playerName, MapUtil.mappifyStringMessage( 
+    			String.format("you have successfully stood up from table %s and position %s",tableId,position)));
+	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, MapUtil.mappifyStringMessage( 
+    			String.format("player %s has successfully stood up from table %s in position %s",playerName,tableId,position)));
 	    }
 	    catch (IllegalArgumentException iae)
 	    {
 	    	logger.error(String.format("An IllegalArgumentException occurred while trying to stand up a player %s at table %s and position %s ",playerName,tableId,position),iae);
-		    messagingTemplate.convertAndSend("/topic/errors",
-		    		String.format("An IllegalArgumentException occurred while trying to stand up a player %s at table %s and position %s. The error message is: %s",playerName,tableId,position,iae.getMessage()));	    	
+		    messagingTemplate.convertAndSend("/topic/errors", MapUtil.mappifyStringMessage(
+		    		String.format("An IllegalArgumentException occurred while trying to stand up a player %s at table %s and position %s. The error message is: %s",playerName,tableId,position,iae.getMessage())));	    	
 	    }	    
 	    catch (IllegalStateException ise)
 	    {
 	    	logger.error(String.format("An IllegalStateException occurred while trying to stand up a player %s at table %s and position %s ",playerName,tableId,position),ise);
-		    messagingTemplate.convertAndSend("/topic/errors",
-	    		String.format("An IllegalStateException occurred while trying to stand up a player %s at table %s and position %s. The error message is: %s",playerName,tableId,position,ise.getMessage()));	    	
+		    messagingTemplate.convertAndSend("/topic/errors", MapUtil.mappifyStringMessage(
+	    		String.format("An IllegalStateException occurred while trying to stand up a player %s at table %s and position %s. The error message is: %s",playerName,tableId,position,ise.getMessage())));	    	
 	    }	    
 	}
 	/**
