@@ -91,4 +91,8 @@ public class TableService
 		table.setCurrentDealer(table.getPlayerAtPosition(lastEntry.getValue()));
 		return map;
 	}
+	public void playCard(Card card, Long tableId, SeatPosition position)
+	{
+		
+	}
 }

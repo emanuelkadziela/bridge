@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.util.Assert;
 
+import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.enumeration.BidSuit;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
@@ -86,11 +87,7 @@ public final class Contract
 			return false;
 		return true;
 	}
-	@Override
-	public String toString() {
-		return "Contract [id=" + id + ", bids=" + bids + ", declarer=" + declarer + ", vulnerable=" + vulnerable
-				+ ", doubled=" + doubled + ", redoubled=" + redoubled + ", suit=" + suit + ", level=" + level + "]";
-	}
+	@Override public String toString() {return new Gson().toJson(this);}
 	private void buildThis() throws IllegalArgumentException
 	{
 		Assert.notNull(bids, "the list of bids cannot be null");

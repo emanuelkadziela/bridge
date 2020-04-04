@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 
 public class SeatedPlayer
@@ -62,5 +63,5 @@ public class SeatedPlayer
 			return false;
 		return true;
 	}
-	@Override public String toString() {return "SeatedPlayer [position=" + position + ", player=" + player + "]";}	
+	@Override public String toString() {return new Gson().toJson(this);}
 }

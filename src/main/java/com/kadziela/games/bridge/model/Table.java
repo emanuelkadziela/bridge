@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 
@@ -66,4 +67,58 @@ public class Table
 		currentContract = new Contract(getCurrentBids());
 		return currentContract;
 	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((bids == null) ? 0 : bids.hashCode());
+		result = prime * result + ((currentContract == null) ? 0 : currentContract.hashCode());
+		result = prime * result + ((currentDealer == null) ? 0 : currentDealer.hashCode());
+		result = prime * result + ((deck == null) ? 0 : deck.hashCode());
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((players == null) ? 0 : players.hashCode());
+		return result;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Table other = (Table) obj;
+		if (bids == null) {
+			if (other.bids != null)
+				return false;
+		} else if (!bids.equals(other.bids))
+			return false;
+		if (currentContract == null) {
+			if (other.currentContract != null)
+				return false;
+		} else if (!currentContract.equals(other.currentContract))
+			return false;
+		if (currentDealer == null) {
+			if (other.currentDealer != null)
+				return false;
+		} else if (!currentDealer.equals(other.currentDealer))
+			return false;
+		if (deck == null) {
+			if (other.deck != null)
+				return false;
+		} else if (!deck.equals(other.deck))
+			return false;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (players == null) {
+			if (other.players != null)
+				return false;
+		} else if (!players.equals(other.players))
+			return false;
+		return true;
+	}
+	@Override public String toString() {return new Gson().toJson(this);}
 }

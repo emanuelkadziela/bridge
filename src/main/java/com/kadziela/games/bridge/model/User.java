@@ -1,5 +1,7 @@
 package com.kadziela.games.bridge.model;
 
+import com.google.gson.Gson;
+
 public class User 
 {
 	public User() {}
@@ -69,9 +71,5 @@ public class User
 			return false;
 		return true;
 	}
-	@Override
-	public String toString() {
-		return "User [id=" + id + ", name=" + name + ", password=" + password + ", email=" + email + "]";
-	}
-	
+	@Override public String toString() {return new Gson().toJson(this);}
 }

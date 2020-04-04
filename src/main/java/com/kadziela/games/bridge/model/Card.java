@@ -1,5 +1,6 @@
 package com.kadziela.games.bridge.model;
 
+import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.enumeration.Rank;
 import com.kadziela.games.bridge.model.enumeration.Suit;
 import com.kadziela.games.bridge.util.ComparisonUtils;
@@ -35,10 +36,7 @@ public class Card implements Comparable<Card>
 		return true;
 	}
 	
-	@Override
-	public String toString() {
-		return String.format("Card [rank=%s, suit=%s]",getRank(), getSuit());
-	}
+	@Override public String toString() {return new Gson().toJson(this);}
 	/**
 	 * compares (sorts) by rank first then suit, finally id
 	 */

@@ -1,5 +1,7 @@
 package com.kadziela.games.bridge.model;
 
+import com.google.gson.Gson;
+
 public class Player extends User 
 {
 	
@@ -32,8 +34,5 @@ public class Player extends User
 			return false;
 		return true;
 	}
-	@Override
-	public String toString() {
-		return "Player [id=" + id + ", User [id=" + super.getId() + ", name=" + getName() + ", password=" + getPassword() + ", email=" + getEmail() + "]]"; 
-	}
+	@Override public String toString() {return new Gson().toJson(this);}
 }

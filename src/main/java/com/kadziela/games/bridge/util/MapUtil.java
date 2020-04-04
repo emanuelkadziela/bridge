@@ -1,14 +1,13 @@
 package com.kadziela.games.bridge.util;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MapUtil 
 {
-	public static Map<String, String> mappifyStringMessage(String message)
+	public static Map<String, Object> mappifyMessage(Object message)
 	{
-		Map<String,String> map = new HashMap<String,String>();
+		Map<String,Object> map = new HashMap<String,Object>();
 		map.put("message", message);
 		return map;
 	}

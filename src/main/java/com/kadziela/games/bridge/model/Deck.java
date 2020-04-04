@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.enumeration.Rank;
 import com.kadziela.games.bridge.model.enumeration.Suit;
 import com.kadziela.games.bridge.util.CardComparatorBySuitThenRank;
@@ -95,4 +96,29 @@ public class Deck
 		System.out.println("##############################################");
 		d.getShuffled().forEach(System.out::println);
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((byRankThenSuit == null) ? 0 : byRankThenSuit.hashCode());
+		return result;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Deck other = (Deck) obj;
+		if (byRankThenSuit == null) {
+			if (other.byRankThenSuit != null)
+				return false;
+		} else if (!byRankThenSuit.equals(other.byRankThenSuit))
+			return false;
+		return true;
+	}
+	@Override public String toString() {return new Gson().toJson(this);}
 }
