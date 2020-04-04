@@ -19,6 +19,7 @@ import com.kadziela.games.bridge.model.Table;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.service.RoomService;
 import com.kadziela.games.bridge.service.TableService;
+import com.kadziela.games.bridge.util.MapUtil;
 
 /**
  * @author Emanuel M. Kadziela
@@ -86,7 +87,12 @@ public class TableController
 	    	Table table = tableService.sitDown(player, Long.valueOf(tableId), SeatPosition.valueOf(position));
 	    	
 	    	messagingTemplate.convertAndSend("/queue/private/"+playerName, String.format("you have successfully sat down at table %s in position %s",tableId,position));
-	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, String.format("player %s has successfully sat down at table %s in position %s",playerName,tableId,position));
+
+    		Map<String,String> response = MapUtil.mappifyStringMessage(String.format("player %s has successfully sat down at table %s in position %s",playerName,tableId,position));
+    		response.put("playerName", playerName);
+    		response.put("tableId", tableId);
+    		response.put("position", position);    		
+	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, response);
 	    	
 	    	if(table.getAllSeatedPlayers().size() == 4)
 	    	{
