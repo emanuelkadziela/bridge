@@ -42,7 +42,10 @@ public class TableService
 		tables.put(table.getId(), table);
 		return table;
 	}
-	public Collection<Table> getAllTables() {return new HashSet<Table>(tables.values());}
+	public Collection<Long> getAllTableIds() 
+	{
+		return new HashSet<Long>(tables.keySet());
+	}
 	public Table sitDown(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException
 	{
 		Table table = tables.get(tableId);

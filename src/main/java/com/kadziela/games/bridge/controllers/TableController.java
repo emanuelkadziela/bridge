@@ -1,6 +1,7 @@
 package com.kadziela.games.bridge.controllers;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
@@ -40,22 +41,22 @@ public class TableController
 	 */
 	@MessageMapping("/table/openNew")
 	@SendTo("/topic/room")
-	public Long openNew()
+	public Map<String,Collection<Long>> openNew()
 	{
 		logger.debug("opening a new table");
-		Table table = tableService.create();
-		return table.getId();
+		tableService.create();
+		return getAll();
 	}
 	/**
-	 * Returns a collection of all tables in the room, sending it to the /topic/room destination
-	 * @return a collection of all tables in the room
+	 * Returns a collection of all table ids in the room, sending it to the /topic/room destination
+	 * @return a collection of all table ids in the room
 	 */
 	@MessageMapping("/table/getAll")
 	@SendTo("/topic/room")
-	public Collection<Table> getAll()
+	public Map<String,Collection<Long>> getAll()
 	{
-		logger.debug("returning all tables");
-		return tableService.getAllTables();
+		logger.debug("returning all table ids");
+		return Collections.singletonMap("tableIds", tableService.getAllTableIds());
 	}
 	/**
 	 * Given a name of a Player who is in the room, the id of a table in the room, and a position, this method will attempt to sit the player down at the
