@@ -8,23 +8,44 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.util.Assert;
+
 import com.google.gson.Gson;
+import com.kadziela.games.bridge.controllers.ContractController;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
+import com.kadziela.games.bridge.model.enumeration.Suit;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 
 public class Table 
 {	
+	private static final Logger logger = LogManager.getLogger(Table.class);
+
 	private final Long id = System.currentTimeMillis();
 	private final Map<SeatPosition,SeatedPlayer> players = new ConcurrentHashMap<>();
 	private final List<Bid> bids = new CopyOnWriteArrayList<>();
 	private final Deck deck = new Deck();
 	private SeatedPlayer currentDealer;
 	private Contract currentContract;
+	private final List<Trick> tricks = new CopyOnWriteArrayList<>();
+	private final List<PlayedCard> partialTrick = new CopyOnWriteArrayList<>();
 	
 	public Long getId() {return id;}	
 	public Deck getDeck() {return deck;}
 	public SeatedPlayer getCurrentDealer() {return currentDealer;}
-	public void setCurrentDealer(SeatedPlayer cd) {currentDealer = cd;}
+	public SeatedPlayer getPlayerAtPosition(SeatPosition sp) {return players.get(sp);}
+	public Collection<SeatedPlayer> getAllSeatedPlayers(){return new HashSet<> (players.values());}
+	public List<Bid> getCurrentBids() {return new ArrayList<>(bids);}
+	public List<Trick> getTricks() {return new ArrayList<>(tricks);}
+	public synchronized List<ValidBidOption> getCurrentBidOptions()
+	{
+		List<ValidBidOption> options = new ArrayList<ValidBidOption>();
+		for (Bid b:bids) options.add(b.getBid());
+		return options;
+	}
+	public void setCurrentDealer(SeatedPlayer cd) {currentDealer = cd;}	
+	public void addValidatedBid(Bid validatedBid) {bids.add(validatedBid);}
 	
 	public void sitDown(SeatPosition sp, Player p) throws IllegalStateException
 	{
@@ -43,16 +64,6 @@ public class Table
 		}
 		SeatedPlayer p = players.remove(sp);
 	}
-	public SeatedPlayer getPlayerAtPosition(SeatPosition sp) {return players.get(sp);}
-	public Collection<SeatedPlayer> getAllSeatedPlayers(){return new HashSet<> (players.values());}
-	public List<Bid> getCurrentBids() {return new ArrayList<>(bids);}
-	public void addValidatedBid(Bid validatedBid) {bids.add(validatedBid);}
-	public synchronized List<ValidBidOption> getCurrentBidOptions()
-	{
-		List<ValidBidOption> options = new ArrayList<ValidBidOption>();
-		for (Bid b:bids) options.add(b.getBid());
-		return options;
-	}
 	public void deal()
 	{
 		List<Card> shuffledDeck = getDeck().getShuffled();
@@ -66,6 +77,49 @@ public class Table
 	{
 		currentContract = new Contract(getCurrentBids());
 		return currentContract;
+	}
+	/**
+	 * Plays the given card (which includes the position). If four cards have been played, returns the resulting trick. 
+	 * @param card the card with the position
+	 * @return a trick if four legal (unequal and from four distinct positions) cards have been played
+	 * @throws IllegalArgumentException if there are any problems with inputs to this method 
+	 * 	(for example a card is played from the same position more than once, or the same card is played more than once, or someone doesn't follow suit, etc.) 
+	 * @throws IllegalStateException If there are any systemic issues, like an attempt to play after 13 tricks have been collected
+	 */
+	public Trick playCard(PlayedCard card) throws IllegalArgumentException,IllegalStateException
+	{
+		Assert.state(tricks.size() < 13, "13 (or more?) tricks have already been played");
+		Assert.state(partialTrick.size() < 4, "more than 4 cards have been played for one trick");
+		SeatPosition leader = SeatPosition.nextPlayer(currentContract.getDeclarer().getPosition());
+		if (!tricks.isEmpty())
+		{
+			leader = tricks.get(tricks.size()-1).getWinner().getPostion();
+		}
+		if (partialTrick.isEmpty())
+		{
+			Assert.isTrue(card.getPostion().equals(leader),String.format("the card should be played by %s, not %s",leader,card.getPostion()));
+			players.get(leader).playCard(card.getCard());
+			partialTrick.add(card);
+			return null;
+		}
+		PlayedCard previous = partialTrick.get(partialTrick.size()-1);
+		SeatPosition throwCard = SeatPosition.nextPlayer(previous.getPostion());
+		Assert.isTrue(card.getPostion().equals(throwCard),String.format("the card should be played by %s, not %s",throwCard,card.getPostion()));
+		Suit led = partialTrick.get(0).getCard().getSuit();
+		if(!(led.equals(card.getCard().getSuit())))			
+		{
+			Assert.isTrue((!players.get(card.getPostion()).hasSuit(led)), String.format("%s was led and %s has cards in that suit, must follow suit",led,card.getPostion()));			
+		}
+		players.get(card.getPostion()).playCard(card.getCard());
+		if (partialTrick.size() == 3)
+		{
+			logger.debug("fourth card completes the trick");
+			Trick trick = new Trick(partialTrick.get(0),partialTrick.get(1),partialTrick.get(2),card,currentContract.getSuit());
+			partialTrick.clear();
+			return trick;
+		}
+		partialTrick.add(card);
+		return null;
 	}
 	@Override
 	public int hashCode() {

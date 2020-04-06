@@ -60,14 +60,15 @@ public class ContractController
 			Bid b = contractService.bid(seatedPlayer, vbo, table);
 			if (contractMade(table))
 			{
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),"The last bid was a third pass, the contract has been made");		    		
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),"The last bid was a third pass, the contract has been made");
+				Contract contract = table.createNewContract();
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),contract);
+				return;
 			}
 			if (redeal(table))
 			{
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),"The last bid was a fourth pass, redeal");		    		
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),"The last bid was a fourth pass, redeal");				
 			}
-			Contract contract = table.createNewContract();
-			messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),contract);		    					
 	    }
 	    catch (IllegalArgumentException iae)
 	    {
@@ -85,7 +86,7 @@ public class ContractController
 	}
 	private boolean contractMade(Table table)
 	{
-		if (table.getCurrentBidOptions().size() > 2 &&
+		if (table.getCurrentBidOptions().size() > 3 &&
 			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-1).equals(ValidBidOption.PASS) && 
 			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-2).equals(ValidBidOption.PASS) && 
 			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-3).equals(ValidBidOption.PASS)) 		

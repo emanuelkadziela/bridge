@@ -4,10 +4,9 @@ public enum SeatPosition
 {
 	NORTH, EAST, SOUTH, WEST;
 	
-	public static SeatPosition nextBidder(SeatPosition currentBidder)
+	public static SeatPosition nextPlayer(SeatPosition currentPlayer)
 	{
-		if(currentBidder.equals(WEST)) return NORTH;
-		return SeatPosition.values()[currentBidder.ordinal()+1];
+		return SeatPosition.values()[(currentPlayer.ordinal()+1) % 4];
 	}
 	public static SeatPosition getPartner(SeatPosition position)
 	{

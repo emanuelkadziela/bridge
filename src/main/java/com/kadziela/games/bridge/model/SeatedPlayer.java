@@ -6,14 +6,15 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
+import com.kadziela.games.bridge.model.enumeration.Suit;
 
 public class SeatedPlayer
 {
 	private SeatPosition position;
 	private Player player;
 	private final Collection<Card> hand = new ConcurrentSkipListSet<Card>();
+	private boolean vulnerable;
 	
-	protected SeatedPlayer() {}
 	public SeatedPlayer(SeatPosition pos, Player p) 
 	{
 		position = pos;
@@ -36,6 +37,17 @@ public class SeatedPlayer
 		hand.clear();
 		hand.addAll(cards);
 	}
+	public void playCard(Card card)
+	{
+		hand.remove(card);
+	}
+	public boolean hasSuit(Suit suit)
+	{
+		for (Card card: hand) if (card.getSuit().equals(suit)) return true;		
+		return false;
+	}
+	public boolean isVulnerable() {return vulnerable;}
+	public void setVulnerable(boolean vul) {vulnerable = vul;}
 	public Collection<Card> getHandCopy() {return new TreeSet<Card>(hand);}
 	@Override
 	public int hashCode() {

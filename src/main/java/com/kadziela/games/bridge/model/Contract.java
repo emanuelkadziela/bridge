@@ -12,7 +12,7 @@ import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 
 public final class Contract 
 {
-	private Long id;
+	private final Long id = System.currentTimeMillis();;
 	private List<Bid> bids;
 	private SeatedPlayer declarer;
 	private boolean vulnerable;
@@ -23,8 +23,7 @@ public final class Contract
 	
 	public Contract(List<Bid> bidList) throws IllegalArgumentException
 	{
-		bids = bidList;
-		id=System.currentTimeMillis();
+		bids = bidList;		
 		buildThis();
 	}
 
@@ -109,17 +108,21 @@ public final class Contract
 		}
 		//is the last bid before the 3 passes double or redouble
 		Bid lastNonPass = bids.get(bids.size()-4);
-		if (lastNonPass.getBid().equals(ValidBidOption.REDOUBLE)) redoubled = true;
+		if (lastNonPass.getBid().equals(ValidBidOption.REDOUBLE)) 
+		{
+			doubled = true;
+			redoubled = true;
+		}
 		if (lastNonPass.getBid().equals(ValidBidOption.DOUBLE)) doubled = true;
 		//what's the last non-pas, non-dbl, non-rdbl bid
 		Bid lastNormal = null;
-		for (int i = bids.size()-4; i>-1; i--)
+		for (int i = 0; i<bids.size(); i++)
 		{
 			Bid bid = bids.get(i);
 			if (bid.getBid().equals(ValidBidOption.REDOUBLE)) continue;
 			if (bid.getBid().equals(ValidBidOption.DOUBLE)) continue;
 			if (bid.getBid().equals(ValidBidOption.PASS)) continue;
-			lastNormal = bid;
+			lastNormal = bid;			
 		}
 		suit = ValidBidOption.getSuit(lastNormal.getBid());
 		level = ValidBidOption.getLevel(lastNormal.getBid());
@@ -145,6 +148,7 @@ public final class Contract
 		if (winningSuitBids.size() > 0) 
 		{			
 			declarer = winningSuitBids.get(0).getSeatedPlayer();
+			vulnerable = declarer.isVulnerable();
 		}
 	}
 }

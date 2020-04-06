@@ -10,10 +10,10 @@ public class SeatPositionTest
 	@Test
 	void testNextBidder()
 	{
-		assertEquals(SeatPosition.NORTH, SeatPosition.nextBidder(SeatPosition.WEST));
-		assertEquals(SeatPosition.EAST, SeatPosition.nextBidder(SeatPosition.NORTH));
-		assertEquals(SeatPosition.SOUTH, SeatPosition.nextBidder(SeatPosition.EAST));
-		assertEquals(SeatPosition.WEST, SeatPosition.nextBidder(SeatPosition.SOUTH));
+		assertEquals(SeatPosition.NORTH, SeatPosition.nextPlayer(SeatPosition.WEST));
+		assertEquals(SeatPosition.EAST, SeatPosition.nextPlayer(SeatPosition.NORTH));
+		assertEquals(SeatPosition.SOUTH, SeatPosition.nextPlayer(SeatPosition.EAST));
+		assertEquals(SeatPosition.WEST, SeatPosition.nextPlayer(SeatPosition.SOUTH));
 	}
 	@Test
 	void testGetPartner()

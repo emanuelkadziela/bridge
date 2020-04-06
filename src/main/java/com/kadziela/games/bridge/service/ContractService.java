@@ -35,9 +35,9 @@ public class ContractService
 			return b;
 		}
 		SeatPosition lastBidder = table.getCurrentBids().get(table.getCurrentBids().size()-1).getSeatedPlayer().getPosition();
-		if (!seatedPlayer.getPosition().equals(SeatPosition.nextBidder(lastBidder)))
+		if (!seatedPlayer.getPosition().equals(SeatPosition.nextPlayer(lastBidder)))
 		{
-			throw new IllegalStateException(String.format("The last position who bid was %s. The next should be %s, not %s",lastBidder,SeatPosition.nextBidder(lastBidder),seatedPlayer.getPosition()));
+			throw new IllegalStateException(String.format("The last position who bid was %s. The next should be %s, not %s",lastBidder,SeatPosition.nextPlayer(lastBidder),seatedPlayer.getPosition()));
 		}
 		if(!ValidBidOption.validBid(bid, table.getCurrentBidOptions())) throw new IllegalArgumentException("Invalid bid");
 		Bid b = new Bid(seatedPlayer,bid);

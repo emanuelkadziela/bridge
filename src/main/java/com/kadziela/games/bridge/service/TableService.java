@@ -93,6 +93,10 @@ public class TableService
 	}
 	public void playCard(Card card, Long tableId, SeatPosition position)
 	{
-		
+		Table table = tables.get(tableId);
+		if (table == null)
+		{
+			throw new IllegalArgumentException(String.format("%s does not match any extant table ids ",tableId));
+		}
 	}
 }

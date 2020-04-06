@@ -48,11 +48,11 @@ public class PlayController
 			Assert.notNull(rank, "rank must be passed into this method inside the attributes parameter");
 			Assert.notNull(suit, "suit must be passed into this method inside the attributes parameter");
 			Card card = new Card(Rank.valueOf(rank),Suit.valueOf(suit));
-			SeatPosition sp = SeatPosition.valueOf(position);
 			tableService.playCard(card, Long.valueOf(tableId), SeatPosition.valueOf(position));
 			Map<String,Object> response = MapUtil.mappifyMessage(String.format("%s played %s",position,card));
 			response.put("card", card);
 			response.put("position", position);
+			messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),response);		    					
 	    }
 	    catch (IllegalArgumentException iae)
 	    {
