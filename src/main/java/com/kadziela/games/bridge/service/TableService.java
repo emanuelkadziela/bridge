@@ -16,9 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import com.kadziela.games.bridge.model.Card;
+import com.kadziela.games.bridge.model.PlayedCard;
 import com.kadziela.games.bridge.model.Player;
 import com.kadziela.games.bridge.model.SeatedPlayer;
 import com.kadziela.games.bridge.model.Table;
+import com.kadziela.games.bridge.model.Trick;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 
 @Service
@@ -91,12 +93,13 @@ public class TableService
 		table.setCurrentDealer(table.getPlayerAtPosition(lastEntry.getValue()));
 		return map;
 	}
-	public void playCard(Card card, Long tableId, SeatPosition position)
+	public Trick playCard(Card card, Long tableId, SeatPosition position)
 	{
 		Table table = tables.get(tableId);
 		if (table == null)
 		{
 			throw new IllegalArgumentException(String.format("%s does not match any extant table ids ",tableId));
 		}
+		return table.playCard(new PlayedCard(card,position));
 	}
 }

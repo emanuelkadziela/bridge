@@ -9,14 +9,11 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-
 import com.kadziela.games.bridge.model.Card;
-import com.kadziela.games.bridge.model.SeatedPlayer;
-import com.kadziela.games.bridge.model.Table;
+import com.kadziela.games.bridge.model.Trick;
 import com.kadziela.games.bridge.model.enumeration.Rank;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.Suit;
-import com.kadziela.games.bridge.service.RoomService;
 import com.kadziela.games.bridge.service.TableService;
 import com.kadziela.games.bridge.util.MapUtil;
 
@@ -48,10 +45,11 @@ public class PlayController
 			Assert.notNull(rank, "rank must be passed into this method inside the attributes parameter");
 			Assert.notNull(suit, "suit must be passed into this method inside the attributes parameter");
 			Card card = new Card(Rank.valueOf(rank),Suit.valueOf(suit));
-			tableService.playCard(card, Long.valueOf(tableId), SeatPosition.valueOf(position));
+			Trick trick = tableService.playCard(card, Long.valueOf(tableId), SeatPosition.valueOf(position));
 			Map<String,Object> response = MapUtil.mappifyMessage(String.format("%s played %s",position,card));
 			response.put("card", card);
 			response.put("position", position);
+			if (trick != null) response.put("trick", trick); 
 			messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),response);		    					
 	    }
 	    catch (IllegalArgumentException iae)
@@ -60,7 +58,6 @@ public class PlayController
 	    	Map<String,Object> errorMap = MapUtil.mappifyMessage("IllegalArgumentExceptiom occurred while trying to play a card ");
 	    	errorMap.put("error",iae.getMessage());
 	    	messagingTemplate.convertAndSend("/topic/errors",errorMap);	    	
-	    }	    
-	    
+	    }	   
 	}
 }
