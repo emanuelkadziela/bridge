@@ -28,10 +28,10 @@ public final class Trick
 		Assert.notNull(thd, "Cannot construct a valid trick with a null card");
 
 		Set<SeatPosition> positions = new ConcurrentSkipListSet<>();
-		positions.add(ldr.getPostion());
-		positions.add(scd.getPostion());
-		positions.add(thd.getPostion());
-		positions.add(frt.getPostion());		
+		positions.add(ldr.getPosition());
+		positions.add(scd.getPosition());
+		positions.add(thd.getPosition());
+		positions.add(frt.getPosition());		
 		Assert.isTrue(positions.size() == 4,"Each card in every trick must come from each of the four positions at the table");
 
 		internal.add(ldr);

@@ -93,24 +93,24 @@ public class Table
 		SeatPosition leader = SeatPosition.nextPlayer(currentContract.getDeclarer().getPosition());
 		if (!tricks.isEmpty())
 		{
-			leader = tricks.get(tricks.size()-1).getWinner().getPostion();
+			leader = tricks.get(tricks.size()-1).getWinner().getPosition();
 		}
 		if (partialTrick.isEmpty())
 		{
-			Assert.isTrue(card.getPostion().equals(leader),String.format("the card should be played by %s, not %s",leader,card.getPostion()));
+			Assert.isTrue(card.getPosition().equals(leader),String.format("the card should be played by %s, not %s",leader,card.getPosition()));
 			players.get(leader).playCard(card.getCard());
 			partialTrick.add(card);
 			return null;
 		}
 		PlayedCard previous = partialTrick.get(partialTrick.size()-1);
-		SeatPosition throwCard = SeatPosition.nextPlayer(previous.getPostion());
-		Assert.isTrue(card.getPostion().equals(throwCard),String.format("the card should be played by %s, not %s",throwCard,card.getPostion()));
+		SeatPosition throwCard = SeatPosition.nextPlayer(previous.getPosition());
+		Assert.isTrue(card.getPosition().equals(throwCard),String.format("the card should be played by %s, not %s",throwCard,card.getPosition()));
 		Suit led = partialTrick.get(0).getCard().getSuit();
 		if(!(led.equals(card.getCard().getSuit())))			
 		{
-			Assert.isTrue((!players.get(card.getPostion()).hasSuit(led)), String.format("%s was led and %s has cards in that suit, must follow suit",led,card.getPostion()));			
+			Assert.isTrue((!players.get(card.getPosition()).hasSuit(led)), String.format("%s was led and %s has cards in that suit, must follow suit",led,card.getPosition()));			
 		}
-		players.get(card.getPostion()).playCard(card.getCard());
+		players.get(card.getPosition()).playCard(card.getCard());
 		if (partialTrick.size() == 3)
 		{
 			logger.debug("fourth card completes the trick");
