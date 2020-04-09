@@ -59,6 +59,18 @@ public class TableController
 		return Collections.singletonMap("tableIds", tableService.getAllTableIds());
 	}
 	/**
+	 * Returns information about a table in the room, sending it to the /topic/room destination
+	 * @param the id of the table
+	 * @return information about a table in the room
+	 */
+	@MessageMapping("/table/getTableInfo")
+	@SendTo("/topic/room")
+	public Map<String,Table> getTableInfo(Long tableId)
+	{
+		logger.debug(String.format("returning table info for id %s",tableId));		
+		return Collections.singletonMap("tableInfo", tableService.findById(tableId));
+	}
+	/**
 	 * Given a name of a Player who is in the room, the id of a table in the room, and a position, this method will attempt to sit the player down at the
 	 * given position at the given table, validating that there is no one already sitting in that seat. It will then publish a message to /queue/private/<playerName>,
 	 * telling them they have been successfully sat down, and it will publish a similar message to the /topic/table/<tableId> destination.
