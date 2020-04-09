@@ -104,7 +104,7 @@ public class TableController
 
     		Map<String,Object> response = MapUtil.mappifyMessage(String.format("player %s has successfully sat down at table %s in position %s",playerName,tableId,position));
     		response.put("playerName", playerName);
-    		response.put("tableId", tableId);
+    		response.put("table", table);
     		response.put("position", position);    		
 	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, response);
 	    	
@@ -153,12 +153,16 @@ public class TableController
 	    	
 	    	Player player = roomService.findByName(playerName);
 	    	Assert.notNull(player,String.format("Player named %s is not in the room",playerName));
-	    	tableService.standUp(player, Long.valueOf(tableId), SeatPosition.valueOf(position));
+	    	Table table = tableService.standUp(player, Long.valueOf(tableId), SeatPosition.valueOf(position));
 	    	
 	    	messagingTemplate.convertAndSend("/queue/private/"+playerName, MapUtil.mappifyMessage( 
     			String.format("you have successfully stood up from table %s and position %s",tableId,position)));
-	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, MapUtil.mappifyMessage( 
-    			String.format("player %s has successfully stood up from table %s in position %s",playerName,tableId,position)));
+	    	
+    		Map<String,Object> response = MapUtil.mappifyMessage(String.format("player %s has successfully stood up from table %s in position %s",playerName,tableId,position));
+    		response.put("playerName", playerName);
+    		response.put("table", table);
+    		response.put("position", position);    		
+	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, response);
 	    }
 	    catch (IllegalArgumentException iae)
 	    {

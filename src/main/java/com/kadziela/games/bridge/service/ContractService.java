@@ -79,6 +79,18 @@ public class ContractService implements NeedsCleanup
 	public void cleanupAfterRubber() {scores.clear();}
 	private void gameRubber(Table table)
 	{
+		//check if game has been reached by either team (>=100 points under)
+		//if so, close all scores (new game begins, so points under the line start at 0 for both teams)
+		//cleanup hands, tricks, and other state tracking elements
+		//set the winning team to vulnerable
+		
+		//check if rubber has been reached (game made by a vulnerable team)
+		//cleanup more state (i.e. scores)
+		//award rubber points
+		
+		
+		
+		
 		int eastUnder = 0;
 		int northUnder = 0;
 		for (ContractScore score : scores)
@@ -94,11 +106,11 @@ public class ContractService implements NeedsCleanup
 			cleanupAfterGame();
 			if (table.getPlayerAtPosition(SeatPosition.NORTH).isVulnerable())
 			{
-				logger.info("north south won the rubber, cleaning up everything");				
+				logger.info("north south won the rubber, cleaning up everything");
+				table.cleanupAfterRubber();
+				cleanupAfterRubber();
 			}
 		}
-		table.cleanupAfterRubber();
-		cleanupAfterRubber();
 	}
 	private int sumUnder(Map<ScoreLineItem,Integer> ledger)
 	{
