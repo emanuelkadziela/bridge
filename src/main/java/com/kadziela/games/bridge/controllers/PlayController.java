@@ -10,10 +10,13 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import com.kadziela.games.bridge.model.Card;
+import com.kadziela.games.bridge.model.ContractScore;
+import com.kadziela.games.bridge.model.Table;
 import com.kadziela.games.bridge.model.Trick;
 import com.kadziela.games.bridge.model.enumeration.Rank;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.Suit;
+import com.kadziela.games.bridge.service.ContractService;
 import com.kadziela.games.bridge.service.TableService;
 import com.kadziela.games.bridge.util.MapUtil;
 
@@ -24,6 +27,7 @@ public class PlayController
 
 	@Autowired private SimpMessageSendingOperations messagingTemplate;
 	@Autowired private TableService tableService;
+	@Autowired private ContractService contractService;
 
 	/**
 	 * Plays a card from a player
@@ -50,7 +54,13 @@ public class PlayController
 			response.put("card", card);
 			response.put("position", position);
 			if (trick != null) response.put("trick", trick); 
-			messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),response);		    					
+			messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),response);
+			Table table = tableService.findById(Long.valueOf(tableId));
+			if (table.getTricks().size() == 13)
+			{
+				logger.info(String.format("13 tricks collected, calculating the contract score"));
+				ContractScore current = contractService.calculateScore(table.getCurrentContract(), table.getTricks(), tableService.getCurrentHands(Long.valueOf(tableId)),table);				
+			}
 	    }
 	    catch (IllegalArgumentException iae)
 	    {

@@ -13,12 +13,13 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.util.Assert;
 
 import com.google.gson.Gson;
+import com.kadziela.games.bridge.NeedsCleanup;
 import com.kadziela.games.bridge.controllers.ContractController;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.Suit;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 
-public class Table 
+public class Table implements NeedsCleanup
 {	
 	private static final Logger logger = LogManager.getLogger(Table.class);
 
@@ -78,6 +79,7 @@ public class Table
 		currentContract = new Contract(getCurrentBids());
 		return currentContract;
 	}
+	public Contract getCurrentContract() {return currentContract;}
 	/**
 	 * Plays the given card (which includes the position). If four cards have been played, returns the resulting trick. 
 	 * @param card the card with the position
@@ -175,4 +177,31 @@ public class Table
 		return true;
 	}
 	@Override public String toString() {return new Gson().toJson(this);}
+	@Override public void cleanupAfterGame() 
+	{
+		bids.clear();
+		currentDealer = null;
+		currentContract = null;
+		tricks.clear();
+		partialTrick.clear();
+	}
+	@Override public void cleanupAfterRubber() 
+	{
+		players.clear();
+		bids.clear();
+		currentDealer = null;
+		currentContract = null;
+		tricks.clear();
+		partialTrick.clear();		
+	}
+	@Override
+	public void cleanupAfterPlay() 
+	{
+		bids.clear();
+		currentDealer = null;
+		currentContract = null;
+		tricks.clear();
+		partialTrick.clear();
+		
+	}
 }

@@ -1,22 +1,34 @@
 package com.kadziela.games.bridge.service;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import com.kadziela.games.bridge.NeedsCleanup;
 import com.kadziela.games.bridge.model.Bid;
+import com.kadziela.games.bridge.model.Card;
+import com.kadziela.games.bridge.model.Contract;
+import com.kadziela.games.bridge.model.ContractScore;
 import com.kadziela.games.bridge.model.SeatedPlayer;
 import com.kadziela.games.bridge.model.Table;
+import com.kadziela.games.bridge.model.Trick;
+import com.kadziela.games.bridge.model.enumeration.ScoreLineItem;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 
 @Service
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-public class ContractService 
+public class ContractService implements NeedsCleanup
 {
 	private static final Logger logger = LogManager.getLogger(ContractService.class);
+	
+	private final List<ContractScore> scores = new CopyOnWriteArrayList<>();
 		
 	public Bid bid(SeatedPlayer seatedPlayer, ValidBidOption bid, Table table) throws IllegalArgumentException,IllegalStateException
 	{
@@ -43,5 +55,60 @@ public class ContractService
 		Bid b = new Bid(seatedPlayer,bid);
 		table.addValidatedBid(b);
 		return b;
+	}
+	public ContractScore calculateScore(Contract contract, List<Trick> tricks, Map<SeatPosition,Collection<Card>> hands,Table table)
+	{
+		ContractScore current = new ContractScore(contract, tricks, hands);
+		scores.add(current);
+		gameRubber(table);
+		table.cleanupAfterPlay();
+		return current;
+	}
+	public void cleanupAfterPlay() 
+	{
+		// nothing to clean up locally, only the table needs cleanup after each play
+	}	
+	public void cleanupAfterGame() 
+	{
+		for (ContractScore score : scores)
+		{
+			if (score.isClosed()) continue;
+			score.setClosed(true);
+		}
+	}
+	public void cleanupAfterRubber() {scores.clear();}
+	private void gameRubber(Table table)
+	{
+		int eastUnder = 0;
+		int northUnder = 0;
+		for (ContractScore score : scores)
+		{
+			if (score.isClosed()) continue;
+			northUnder += sumUnder(score.getNorthLedger());
+			eastUnder += sumUnder(score.getEastLedger());
+		}
+		if (northUnder >= 100)
+		{
+			logger.info("north south won the game, cleaning up after game");
+			table.cleanupAfterGame();
+			cleanupAfterGame();
+			if (table.getPlayerAtPosition(SeatPosition.NORTH).isVulnerable())
+			{
+				logger.info("north south won the rubber, cleaning up everything");				
+			}
+		}
+		table.cleanupAfterRubber();
+		cleanupAfterRubber();
+	}
+	private int sumUnder(Map<ScoreLineItem,Integer> ledger)
+	{
+		int result = 0;
+		for (int i = 0; i <= ScoreLineItem.CONTRACT_MINOR_REDOUBLED.ordinal(); i++)
+		{
+			ScoreLineItem item = ScoreLineItem.values()[i];
+			Integer count = ledger.get(item);
+			if (count != null && count > 0) result += item.points * count;
+		}
+		return result;
 	}
 }

@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import com.kadziela.games.bridge.NeedsCleanup;
 import com.kadziela.games.bridge.model.Card;
 import com.kadziela.games.bridge.model.PlayedCard;
 import com.kadziela.games.bridge.model.Player;
@@ -25,7 +26,7 @@ import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 
 @Service
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-public class TableService 
+public class TableService
 {
 	private static final Logger logger = LogManager.getLogger(TableService.class);
 
@@ -49,20 +50,14 @@ public class TableService
 	public Table sitDown(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException
 	{
 		Table table = tables.get(tableId);
-		if (table == null)
-		{
-			throw new IllegalArgumentException(String.format("%s does not match any extant table ids ",tableId));
-		}
+		Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
 		table.sitDown(position, player);
 		return table;
 	}
 	public Table standUp(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException
 	{
 		Table table = tables.get(tableId);
-		if (table == null)
-		{
-			throw new IllegalArgumentException(String.format("%s does not match any extant table ids ",tableId));
-		}
+		Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
 		table.standUp(position);
 		return table;
 	}
@@ -96,13 +91,21 @@ public class TableService
 		table.setCurrentDealer(table.getPlayerAtPosition(lastEntry.getValue()));
 		return map;
 	}
-	public Trick playCard(Card card, Long tableId, SeatPosition position)
+	public Trick playCard(Card card, Long tableId, SeatPosition position) throws IllegalArgumentException
 	{
 		Table table = tables.get(tableId);
-		if (table == null)
-		{
-			throw new IllegalArgumentException(String.format("%s does not match any extant table ids ",tableId));
-		}
+		Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
 		return table.playCard(new PlayedCard(card,position));
+	}
+	public Map<SeatPosition,Collection<Card>> getCurrentHands(Long tableId) throws IllegalArgumentException
+	{
+		Table table = tables.get(tableId);
+		Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
+		Map<SeatPosition,Collection<Card>> result = new ConcurrentHashMap<SeatPosition, Collection<Card>>();
+		for (SeatedPlayer player : table.getAllSeatedPlayers())
+		{
+			result.put(player.getPosition(), player.getHandCopy());
+		}
+		return result;
 	}
 }

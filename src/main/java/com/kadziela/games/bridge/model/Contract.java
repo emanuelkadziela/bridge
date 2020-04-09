@@ -6,11 +6,12 @@ import java.util.List;
 import org.springframework.util.Assert;
 
 import com.google.gson.Gson;
+import com.kadziela.games.bridge.NeedsCleanup;
 import com.kadziela.games.bridge.model.enumeration.BidSuit;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 
-public final class Contract 
+public final class Contract
 {
 	private final Long id = System.currentTimeMillis();;
 	private List<Bid> bids;

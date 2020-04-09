@@ -3,7 +3,7 @@ package com.kadziela.games.bridge.model;
 import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 
-public class Bid 
+public class Bid
 {
 	private final Long id = System.currentTimeMillis();
 	private SeatedPlayer seatedPlayer;
