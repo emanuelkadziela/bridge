@@ -20,6 +20,7 @@ import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 import com.kadziela.games.bridge.service.ContractService;
 import com.kadziela.games.bridge.service.TableService;
+import com.kadziela.games.bridge.util.MapUtil;
 
 @Controller
 public class ContractController 
@@ -60,15 +61,23 @@ public class ContractController
 			Bid b = contractService.bid(seatedPlayer, vbo, table);
 			if (contractMade(table))
 			{
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),"The last bid was a third pass, the contract has been made");
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),
+					MapUtil.mappifyMessage("The last bid was a third pass, the contract has been made"));
 				Contract contract = table.createNewContract();
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),contract);
+				Map<String,Object> response = MapUtil.mappifyMessage("contract", contract);
+				response.put("bids",contract.getBids());
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),response);
 				return;
 			}
 			if (redeal(table))
 			{
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),"The last bid was a fourth pass, redeal");				
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),
+					MapUtil.mappifyMessage("The last bid was a fourth pass, redeal"));
+				return;
 			}
+			Map<String,Object> response = MapUtil.mappifyMessage(String.format("Valid bid: %s"));
+			response.put("nextPosition", SeatPosition.nextPlayer(sp));
+			messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),response);			
 	    }
 	    catch (IllegalArgumentException iae)
 	    {

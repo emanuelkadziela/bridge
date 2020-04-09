@@ -177,15 +177,16 @@ public class Table implements NeedsCleanup
 		return true;
 	}
 	@Override public String toString() {return new Gson().toJson(this);}
-	@Override public void cleanupAfterGame() 
+	@Override public void cleanupAfterGame(Long tableId) 
 	{
 		bids.clear();
 		currentDealer = null;
 		currentContract = null;
 		tricks.clear();
-		partialTrick.clear();
+		partialTrick.clear();		
+		for (SeatedPlayer player : players.values()) player.cleanupAfterGame(tableId);		
 	}
-	@Override public void cleanupAfterRubber() 
+	@Override public void cleanupAfterRubber(Long tableId) 
 	{
 		players.clear();
 		bids.clear();
@@ -193,6 +194,7 @@ public class Table implements NeedsCleanup
 		currentContract = null;
 		tricks.clear();
 		partialTrick.clear();		
+		for (SeatedPlayer player : players.values()) player.cleanupAfterRubber(tableId);		
 	}
 	@Override
 	public void cleanupAfterPlay() 
@@ -202,6 +204,6 @@ public class Table implements NeedsCleanup
 		currentContract = null;
 		tricks.clear();
 		partialTrick.clear();
-		
+		players.values().forEach(SeatedPlayer::cleanupAfterPlay);		 		
 	}
 }

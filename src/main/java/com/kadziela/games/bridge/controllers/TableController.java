@@ -146,7 +146,7 @@ public class TableController
 			Assert.notNull(attributes,"the input attributes canot be null");
 	    	playerName = attributes.get("playerName");
 	    	tableId = attributes.get("tableId");
-	    	position = attributes.get("playerName");
+	    	position = attributes.get("position");
 	    	Assert.notNull(playerName, "the playerName must be passed in the attribute map");
 	    	Assert.notNull(tableId, "the tableId must be passed in the attribute map");
 	    	Assert.notNull(position, "the position must be passed in the attribute map");
@@ -159,7 +159,7 @@ public class TableController
     			String.format("you have successfully stood up from table %s and position %s",tableId,position)));
 	    	
     		Map<String,Object> response = MapUtil.mappifyMessage(String.format("player %s has successfully stood up from table %s in position %s",playerName,tableId,position));
-    		response.put("playerName", playerName);
+    		//response.put("playerName", playerName);
     		response.put("table", table);
     		response.put("position", position);    		
 	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, response);
@@ -203,8 +203,10 @@ public class TableController
 			{
 				logger.debug(String.format("dealing at table %s for the first time, choosing the first dealer ... ", table));
 				Map<Card,SeatPosition> map = tableService.chooseFirstDealer(table);
-		    	messagingTemplate.convertAndSend("/topic/table/"+tableId, map);
-		    	messagingTemplate.convertAndSend("/topic/table/"+tableId, String.format("current dealer is %s ", table.getCurrentDealer().getPosition()));				
+		    	messagingTemplate.convertAndSend("/topic/table/"+tableId, MapUtil.mappifyMessage("cardsBySeat", map));
+	    		Map<String,Object> dealer = MapUtil.mappifyMessage(String.format("current dealer is %s ",table.getCurrentDealer().getPosition()));
+	    		dealer.put("dealer",table.getCurrentDealer().getPosition());
+		    	messagingTemplate.convertAndSend("/topic/table/"+tableId, dealer);				
 			}
 			else
 			{
@@ -212,7 +214,7 @@ public class TableController
 				tableService.deal(table);
 				for(SeatedPlayer player : table.getAllSeatedPlayers())
 				{
-					messagingTemplate.convertAndSend("/queue/private/"+player.getPlayer().getName(), player.getHandCopy());
+					messagingTemplate.convertAndSend("/queue/private/"+player.getPlayer().getName(), Collections.singletonMap("cards", player.getHandCopy()));
 				}
 			}
 		}

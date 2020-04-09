@@ -32,7 +32,8 @@ public class RoomController
 			Player player = roomService.addPlayer(name);
 		    logger.debug("Players in the room: ");
 		    for (Player p:roomService.getPlayers()) {logger.debug(String.format(", %s",p.getName()));}			
-		    messagingTemplate.convertAndSend("/queue/private/"+name, "Hello new player "+player.toString()); // so this is a workaround for now
+		    messagingTemplate.convertAndSend("/queue/private/"+name, 
+	    		MapUtil.mappifyMessage(String.format("Hello new player ,%s",player.toString()))); // so this is a workaround for now
 	    }
 	    catch (IllegalArgumentException iae)
 	    {

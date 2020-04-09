@@ -108,4 +108,15 @@ public class TableService
 		}
 		return result;
 	}
+	public Map<SeatPosition,Collection<Card>> getPersistentHands(Long tableId) throws IllegalArgumentException
+	{
+		Table table = tables.get(tableId);
+		Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
+		Map<SeatPosition,Collection<Card>> result = new ConcurrentHashMap<SeatPosition, Collection<Card>>();
+		for (SeatedPlayer player : table.getAllSeatedPlayers())
+		{
+			result.put(player.getPosition(), player.getPersistentHandCopy());			
+		}
+		return result;
+	}
 }

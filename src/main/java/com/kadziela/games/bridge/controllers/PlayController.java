@@ -59,7 +59,7 @@ public class PlayController
 			if (table.getTricks().size() == 13)
 			{
 				logger.info(String.format("13 tricks collected, calculating the contract score"));
-				ContractScore current = contractService.calculateScore(table.getCurrentContract(), table.getTricks(), tableService.getCurrentHands(Long.valueOf(tableId)),table);				
+				Map<String,String> scoreBreakdown = contractService.calculateScore(table.getCurrentContract(), table.getTricks(), tableService.getPersistentHands(Long.valueOf(tableId)),table);				
 			}
 	    }
 	    catch (IllegalArgumentException iae)

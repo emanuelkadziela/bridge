@@ -5,14 +5,16 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.google.gson.Gson;
+import com.kadziela.games.bridge.NeedsCleanup;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.Suit;
 
-public class SeatedPlayer
+public class SeatedPlayer implements NeedsCleanup
 {
 	private SeatPosition position;
 	private Player player;
 	private final Collection<Card> hand = new ConcurrentSkipListSet<Card>();
+	private final Collection<Card> persistentHand = new ConcurrentSkipListSet<Card>();
 	private boolean vulnerable;
 	
 	public SeatedPlayer(SeatPosition pos, Player p) 
@@ -36,6 +38,8 @@ public class SeatedPlayer
 	{
 		hand.clear();
 		hand.addAll(cards);
+		persistentHand.clear();
+		persistentHand.addAll(cards);
 	}
 	public void playCard(Card card)
 	{
@@ -49,6 +53,7 @@ public class SeatedPlayer
 	public boolean isVulnerable() {return vulnerable;}
 	public void setVulnerable(boolean vul) {vulnerable = vul;}
 	public Collection<Card> getHandCopy() {return new TreeSet<Card>(hand);}
+	public Collection<Card> getPersistentHandCopy() {return new TreeSet<Card>(persistentHand);}
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -76,4 +81,22 @@ public class SeatedPlayer
 		return true;
 	}
 	@Override public String toString() {return new Gson().toJson(this);}
+	@Override
+	public void cleanupAfterPlay() 
+	{
+		hand.clear();
+		persistentHand.clear();
+	}
+	@Override
+	public void cleanupAfterGame(Long tableId) 
+	{
+		hand.clear();
+		persistentHand.clear();
+	}
+	@Override
+	public void cleanupAfterRubber(Long tableId) 
+	{
+		hand.clear();
+		persistentHand.clear();
+	}
 }

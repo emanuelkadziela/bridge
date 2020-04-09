@@ -16,10 +16,12 @@ public interface NeedsCleanup
 	void cleanupAfterPlay();
 	/**
 	 * Cleanup state after a game
+	 * @param tableId TODO
 	 */
-	void cleanupAfterGame();
+	void cleanupAfterGame(Long tableId);
 	/**
 	 * Cleanup state after a rubber
+	 * @param tableId TODO
 	 */
-	void cleanupAfterRubber();
+	void cleanupAfterRubber(Long tableId);
 }

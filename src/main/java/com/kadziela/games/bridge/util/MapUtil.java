@@ -11,4 +11,10 @@ public class MapUtil
 		map.put("message", message);
 		return map;
 	}
+	public static Map<String, Object> mappifyMessage(String key, Object message)
+	{
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put(key, message);
+		return map;
+	}
 }

@@ -3,6 +3,7 @@ package com.kadziela.games.bridge.service;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +29,7 @@ public class ContractService implements NeedsCleanup
 {
 	private static final Logger logger = LogManager.getLogger(ContractService.class);
 	
-	private final List<ContractScore> scores = new CopyOnWriteArrayList<>();
+	private final Map<Long,List<ContractScore>> scores = new ConcurrentHashMap<Long, List<ContractScore>>();
 		
 	public Bid bid(SeatedPlayer seatedPlayer, ValidBidOption bid, Table table) throws IllegalArgumentException,IllegalStateException
 	{
@@ -56,27 +57,46 @@ public class ContractService implements NeedsCleanup
 		table.addValidatedBid(b);
 		return b;
 	}
-	public ContractScore calculateScore(Contract contract, List<Trick> tricks, Map<SeatPosition,Collection<Card>> hands,Table table)
+	/**
+	 * Returns a map containing a breakdown of the scores by team, game, and over/under
+	 * @param contract - the current contract
+	 * @param tricks actual tricks from the game that just ended
+	 * @param hands actual hands that the players were dealt (originally)
+	 * @param table the table where play occurred
+	 * @return a map of string keys and integer values representing the score
+	 */
+	public Map<String,String> calculateScore(Contract contract, List<Trick> tricks, Map<SeatPosition,Collection<Card>> hands,Table table) throws IllegalArgumentException,IllegalStateException
 	{
+		Assert.notNull(table, "table cannot be null");
+		Assert.notNull(contract, "contract cannot be null");
+		Assert.notNull(contract, "tricks cannot be null");
+		Assert.notNull(contract, "hands cannot be null");
 		ContractScore current = new ContractScore(contract, tricks, hands);
-		scores.add(current);
+		List<ContractScore> scoreList = scores.get(table.getId());
+		if (scoreList == null) 
+		{
+			scoreList = new CopyOnWriteArrayList<ContractScore>();
+			scores.put(table.getId(), scoreList);
+		}
+		scoreList.add(current);
 		gameRubber(table);
+		Map<String,String> scoreBreakdown = new ConcurrentHashMap<String, String>(); 
 		table.cleanupAfterPlay();
-		return current;
+		return scoreBreakdown;
 	}
 	public void cleanupAfterPlay() 
 	{
 		// nothing to clean up locally, only the table needs cleanup after each play
 	}	
-	public void cleanupAfterGame() 
+	public void cleanupAfterGame(Long tableId) 
 	{
-		for (ContractScore score : scores)
+		for (ContractScore score : scores.get(tableId))
 		{
 			if (score.isClosed()) continue;
 			score.setClosed(true);
 		}
 	}
-	public void cleanupAfterRubber() {scores.clear();}
+	public void cleanupAfterRubber(Long tableId) {scores.get(tableId).clear();}
 	private void gameRubber(Table table)
 	{
 		//check if game has been reached by either team (>=100 points under)
@@ -93,7 +113,7 @@ public class ContractService implements NeedsCleanup
 		
 		int eastUnder = 0;
 		int northUnder = 0;
-		for (ContractScore score : scores)
+		for (ContractScore score : scores.get(table.getId()))
 		{
 			if (score.isClosed()) continue;
 			northUnder += sumUnder(score.getNorthLedger());
@@ -102,13 +122,13 @@ public class ContractService implements NeedsCleanup
 		if (northUnder >= 100)
 		{
 			logger.info("north south won the game, cleaning up after game");
-			table.cleanupAfterGame();
-			cleanupAfterGame();
+			table.cleanupAfterGame(null);
+			cleanupAfterGame(null);
 			if (table.getPlayerAtPosition(SeatPosition.NORTH).isVulnerable())
 			{
 				logger.info("north south won the rubber, cleaning up everything");
-				table.cleanupAfterRubber();
-				cleanupAfterRubber();
+				table.cleanupAfterRubber(null);
+				cleanupAfterRubber(null);
 			}
 		}
 	}
