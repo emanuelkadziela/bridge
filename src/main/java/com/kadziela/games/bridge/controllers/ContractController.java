@@ -66,6 +66,7 @@ public class ContractController
 				Contract contract = table.createNewContract();
 				Map<String,Object> response = MapUtil.mappifyMessage("contract", contract);
 				response.put("bids",contract.getBids());
+				response.put("nextPosition", SeatPosition.nextPlayer(contract.getDeclarer().getPosition()));
 				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),response);
 				return;
 			}
