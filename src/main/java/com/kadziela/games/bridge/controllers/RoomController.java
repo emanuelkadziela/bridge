@@ -39,7 +39,7 @@ public class RoomController
 	    {
 	    	logger.error("Unable to create a new player with username: "+ name+", because that name is already in use ", iae);
 		    messagingTemplate.convertAndSend("/topic/errors",
-	    		MapUtil.mappifyMessage(String.format("Unable to create a new player with username: %s, because that name is already in use ",name)));	    	
+	    		MapUtil.mappifyMessage("error",String.format("Unable to create a new player with username: %s, because that name is already in use ",name)));	    	
 	    }	    
 	    return roomService.getPlayers();
 	}

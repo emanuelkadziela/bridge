@@ -83,13 +83,13 @@ public class ContractController
 	    {
 	    	logger.error(String.format("An IllegalArgumentException occurred while trying to bid %s at table %s and position %s ",bid,tableId,position),iae);
 		    messagingTemplate.convertAndSend("/topic/errors",
-		    		String.format("An IllegalArgumentException occurred while trying to bid %s at table %s and position %s. The error message is: %s",bid,tableId,position,iae.getMessage()));	    	
+		    		MapUtil.mappifyMessage("error",String.format("An IllegalArgumentException occurred while trying to bid %s at table %s and position %s. The error message is: %s",bid,tableId,position,iae.getMessage())));	    	
 	    }	    
 	    catch (IllegalStateException ise)
 	    {
 	    	logger.error(String.format("An IllegalStateException occurred while trying to bid %s at table %s and position %s ",bid,tableId,position),ise);
 		    messagingTemplate.convertAndSend("/topic/errors",
-	    		String.format("An IllegalStateException occurred while trying to bid %s at table %s and position %s. The error message is: %s",bid,tableId,position,ise.getMessage()));	    	
+		    		MapUtil.mappifyMessage("error",String.format("An IllegalStateException occurred while trying to bid %s at table %s and position %s. The error message is: %s",bid,tableId,position,ise.getMessage())));	    	
 	    }	    
 
 	}
