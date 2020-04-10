@@ -75,7 +75,7 @@ public class ContractController
 					MapUtil.mappifyMessage("The last bid was a fourth pass, redeal"));
 				return;
 			}
-			Map<String,Object> response = MapUtil.mappifyMessage(String.format("Valid bid: %s"));
+			Map<String,Object> response = MapUtil.mappifyMessage(String.format("Valid bid: %s",bid));
 			response.put("nextPosition", SeatPosition.nextPlayer(sp));
 			messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),response);			
 	    }
