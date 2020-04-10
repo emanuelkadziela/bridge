@@ -59,15 +59,15 @@ public class PlayController
 			if (table.getTricks().size() == 13)
 			{
 				logger.info(String.format("13 tricks collected, calculating the contract score"));
-				Map<String,String> scoreBreakdown = contractService.calculateScore(table.getCurrentContract(), table.getTricks(), tableService.getPersistentHands(Long.valueOf(tableId)),table);				
+				Map<String,String> scoreBreakdown = contractService.calculateScore(table.getCurrentContract(), table.getTricks(), tableService.getPersistentHands(Long.valueOf(tableId)),table);
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),MapUtil.mappifyMessage("score",scoreBreakdown));
+				
 			}
 	    }
 	    catch (IllegalArgumentException iae)
 	    {
 	    	logger.error("IllegalArgumentExceptiom occurred while trying to play a card ", iae);
-	    	Map<String,Object> errorMap = MapUtil.mappifyMessage("IllegalArgumentExceptiom occurred while trying to play a card ");
-	    	errorMap.put("error",iae.getMessage());
-	    	messagingTemplate.convertAndSend("/topic/errors",errorMap);	    	
+	    	messagingTemplate.convertAndSend("/topic/errors",MapUtil.mappifyMessage("error",String.format("IllegalArgumentExceptiom occurred while trying to play a card %s",iae.getMessage())));	    	
 	    }	   
 	}
 }

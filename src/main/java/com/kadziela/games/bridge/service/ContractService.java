@@ -72,16 +72,27 @@ public class ContractService implements NeedsCleanup
 		Assert.notNull(contract, "tricks cannot be null");
 		Assert.notNull(contract, "hands cannot be null");
 		ContractScore current = new ContractScore(contract, tricks, hands);
-		List<ContractScore> scoreList = scores.get(table.getId());
+		List<ContractScore> scoreList = scores.get(table.getId());		
 		if (scoreList == null) 
 		{
 			scoreList = new CopyOnWriteArrayList<ContractScore>();
 			scores.put(table.getId(), scoreList);
 		}
 		scoreList.add(current);
-		gameRubber(table);
-		Map<String,String> scoreBreakdown = new ConcurrentHashMap<String, String>(); 
-		table.cleanupAfterPlay();
+		SeatPosition game = game(table);
+		boolean rubber = false;
+		if (game != null)
+		{
+			rubber = rubberOrVul(table,current,game);
+			table.cleanupAfterGame(null);
+		}		
+		Map<String,String> scoreBreakdown = convertScore(table.getId());
+		table.cleanupAfterPlay();		
+		if (rubber)
+		{
+			table.cleanupAfterRubber(null);
+			cleanupAfterRubber(null);			
+		}
 		return scoreBreakdown;
 	}
 	public void cleanupAfterPlay() 
@@ -97,19 +108,12 @@ public class ContractService implements NeedsCleanup
 		}
 	}
 	public void cleanupAfterRubber(Long tableId) {scores.get(tableId).clear();}
-	private void gameRubber(Table table)
+	private SeatPosition game(Table table)
 	{
 		//check if game has been reached by either team (>=100 points under)
 		//if so, close all scores (new game begins, so points under the line start at 0 for both teams)
 		//cleanup hands, tricks, and other state tracking elements
 		//set the winning team to vulnerable
-		
-		//check if rubber has been reached (game made by a vulnerable team)
-		//cleanup more state (i.e. scores)
-		//award rubber points
-		
-		
-		
 		
 		int eastUnder = 0;
 		int northUnder = 0;
@@ -121,16 +125,44 @@ public class ContractService implements NeedsCleanup
 		}
 		if (northUnder >= 100)
 		{
-			logger.info("north south won the game, cleaning up after game");
-			table.cleanupAfterGame(null);
-			cleanupAfterGame(null);
+			logger.info("north south won the game");
+			return SeatPosition.NORTH;
+		}
+		if (eastUnder >= 100)
+		{
+			logger.info("east west won the game");
+			return SeatPosition.EAST;
+		}
+		return null;		
+	}
+	private boolean rubberOrVul(Table table, ContractScore currentScore,SeatPosition gameWinner)
+	{
+		//check if rubber has been reached (game made by a vulnerable team)
+		//cleanup more state (i.e. scores)
+		//award rubber points
+		if (gameWinner.equals(SeatPosition.NORTH))
+		{
 			if (table.getPlayerAtPosition(SeatPosition.NORTH).isVulnerable())
 			{
-				logger.info("north south won the rubber, cleaning up everything");
-				table.cleanupAfterRubber(null);
-				cleanupAfterRubber(null);
-			}
+				logger.info("north south won the rubber");				
+				addRubberBonus(currentScore.getNorthLedger(),!table.getPlayerAtPosition(SeatPosition.EAST).isVulnerable());
+				return true;
+			}			
+			table.getPlayerAtPosition(SeatPosition.NORTH).setVulnerable(true);
+			table.getPlayerAtPosition(SeatPosition.SOUTH).setVulnerable(true);			
 		}
+		else
+		{
+			if (table.getPlayerAtPosition(SeatPosition.EAST).isVulnerable())
+			{
+				logger.info("east west won the rubber");
+				addRubberBonus(currentScore.getEastLedger(),!table.getPlayerAtPosition(SeatPosition.NORTH).isVulnerable());
+				return true;
+			}			
+			table.getPlayerAtPosition(SeatPosition.EAST).setVulnerable(true);
+			table.getPlayerAtPosition(SeatPosition.WEST).setVulnerable(true);
+		}
+		return false;
 	}
 	private int sumUnder(Map<ScoreLineItem,Integer> ledger)
 	{
@@ -142,5 +174,53 @@ public class ContractService implements NeedsCleanup
 			if (count != null && count > 0) result += item.points * count;
 		}
 		return result;
+	}
+	private int sumOver(Map<ScoreLineItem,Integer> ledger)
+	{
+		int result = 0;
+		for (int i = ScoreLineItem.CONTRACT_MINOR_REDOUBLED.ordinal()+1; i <= ScoreLineItem.values().length-1; i++)
+		{
+			ScoreLineItem item = ScoreLineItem.values()[i];
+			Integer count = ledger.get(item);
+			if (count != null && count > 0) result += item.points * count;
+		}
+		return result;		
+	}
+	private void addRubberBonus (Map<ScoreLineItem,Integer> ledger, boolean fast)
+	{
+		if (fast) ledger.put(ScoreLineItem.RUBBER_FAST, 1);
+		else ledger.put(ScoreLineItem.RUBBER_SLOW, 1);
+	}
+	private Map<String,String> convertScore(Long tableId) throws IllegalStateException
+	{
+		Map<String,String> scoreBreakdown = new ConcurrentHashMap<String, String>();		
+		List<ContractScore> tableScores = scores.get(tableId);
+		int eastUnder = 0;
+		int northUnder = 0;
+		int eastOver = 0;
+		int northOver = 0;
+		int gameCounter = 0;
+		for (ContractScore score : tableScores)
+		{
+			eastUnder += sumUnder(score.getEastLedger());
+			northUnder += sumUnder(score.getNorthLedger());
+			eastOver += sumOver(score.getEastLedger());
+			northOver += sumOver(score.getNorthLedger());
+			if (eastUnder >= 100 || northUnder >= 100)
+			{
+				scoreBreakdown.put(String.format("game%sEastWestUnder", gameCounter),String.valueOf(eastUnder));
+				scoreBreakdown.put(String.format("game%sNorthSouthUnder", gameCounter),String.valueOf(northUnder));
+				scoreBreakdown.put(String.format("game%sEastWestOver", gameCounter),String.valueOf(eastOver));
+				scoreBreakdown.put(String.format("game%sNorthSouthOver", gameCounter),String.valueOf(northOver));
+				eastUnder = 0;
+				northUnder = 0;
+				eastOver = 0;
+				northOver = 0;
+				gameCounter++;
+				
+			}
+			if (gameCounter > 3) throw new IllegalStateException("more than three games were either played or scored, so something is wrong"); 				
+		}
+		return scoreBreakdown;
 	}
 }

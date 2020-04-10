@@ -213,7 +213,7 @@ public final class ContractScore
 	public Long getId() {return id;}	
 	public boolean isClosed() {return closed;}
 	public void setClosed(boolean clsd) {closed = clsd;}
-	
+	public Contract getContract() {return contract;}
 	@Override
 	public int hashCode() 
 	{

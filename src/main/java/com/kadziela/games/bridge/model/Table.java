@@ -184,7 +184,7 @@ public class Table implements NeedsCleanup
 		currentContract = null;
 		tricks.clear();
 		partialTrick.clear();		
-		for (SeatedPlayer player : players.values()) player.cleanupAfterGame(tableId);		
+		for (SeatedPlayer player : players.values()) player.cleanupAfterGame(getId());		
 	}
 	@Override public void cleanupAfterRubber(Long tableId) 
 	{
@@ -194,7 +194,8 @@ public class Table implements NeedsCleanup
 		currentContract = null;
 		tricks.clear();
 		partialTrick.clear();		
-		for (SeatedPlayer player : players.values()) player.cleanupAfterRubber(tableId);		
+		for (SeatedPlayer player : players.values()) player.cleanupAfterRubber(getId());
+		players.clear();
 	}
 	@Override
 	public void cleanupAfterPlay() 
