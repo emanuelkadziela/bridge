@@ -50,6 +50,11 @@ public class SeatedPlayer implements NeedsCleanup
 		for (Card card: hand) if (card.getSuit().equals(suit)) return true;		
 		return false;
 	}
+	public boolean hasCard(Card card)
+	{
+		for (Card inHand: hand) if (card.equals(inHand)) return true;
+		return false;
+	}
 	public boolean isVulnerable() {return vulnerable;}
 	public void setVulnerable(boolean vul) {vulnerable = vul;}
 	public Collection<Card> getHandCopy() {return new TreeSet<Card>(hand);}

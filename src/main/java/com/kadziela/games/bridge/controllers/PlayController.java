@@ -48,20 +48,24 @@ public class PlayController
 			Assert.notNull(position, "position must be passed into this method inside the attributes parameter");
 			Assert.notNull(rank, "rank must be passed into this method inside the attributes parameter");
 			Assert.notNull(suit, "suit must be passed into this method inside the attributes parameter");
-			Card card = new Card(Rank.valueOf(rank),Suit.valueOf(suit));
+			Card card = new Card(Rank.valueOf(rank),Suit.valueOf(suit));			
 			Trick trick = tableService.playCard(card, Long.valueOf(tableId), SeatPosition.valueOf(position));
 			Map<String,Object> response = MapUtil.mappifyMessage(String.format("%s played %s",position,card));
 			response.put("card", card);
 			response.put("position", position);
-			if (trick != null) response.put("trick", trick); 
+			response.put("nextPosition", SeatPosition.nextPlayer(SeatPosition.valueOf(position)));
+			if (trick != null) 
+			{
+				response.put("trick", trick); 
+				response.put("nextPosition", trick.getWinner().getPosition());
+			}
 			messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),response);
 			Table table = tableService.findById(Long.valueOf(tableId));
 			if (table.getTricks().size() == 13)
 			{
 				logger.info(String.format("13 tricks collected, calculating the contract score"));
 				Map<String,String> scoreBreakdown = contractService.calculateScore(table.getCurrentContract(), table.getTricks(), tableService.getPersistentHands(Long.valueOf(tableId)),table);
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),MapUtil.mappifyMessage("score",scoreBreakdown));
-				
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),MapUtil.mappifyMessage("score",scoreBreakdown));				
 			}
 	    }
 	    catch (IllegalArgumentException iae)
@@ -69,5 +73,5 @@ public class PlayController
 	    	logger.error("IllegalArgumentExceptiom occurred while trying to play a card ", iae);
 	    	messagingTemplate.convertAndSend("/topic/errors",MapUtil.mappifyMessage("error",String.format("IllegalArgumentExceptiom occurred while trying to play a card %s",iae.getMessage())));	    	
 	    }	   
-	}
+	}	
 }

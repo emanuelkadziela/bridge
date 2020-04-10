@@ -92,6 +92,7 @@ public class Table implements NeedsCleanup
 	{
 		Assert.state(tricks.size() < 13, "13 (or more?) tricks have already been played");
 		Assert.state(partialTrick.size() < 4, "more than 4 cards have been played for one trick");
+		Assert.isTrue((players.get(card.getPosition()).hasCard(card.getCard())), String.format("player %s is not holding card %s",card.getPosition(),card.getCard()));			
 		SeatPosition leader = SeatPosition.nextPlayer(currentContract.getDeclarer().getPosition());
 		if (!tricks.isEmpty())
 		{
