@@ -1,5 +1,6 @@
 package com.kadziela.games.bridge;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.lang.reflect.Type;
@@ -55,6 +56,7 @@ public class ChatIntegrationTest
 	    Message message = completableFuture.get(10, TimeUnit.SECONDS);
 	    logger.info(message);
 	    assertNotNull(message);
+	    assertEquals("Hello",message.getContent());
 	}
 	 private List<Transport> createTransportClient() 
 	 {
