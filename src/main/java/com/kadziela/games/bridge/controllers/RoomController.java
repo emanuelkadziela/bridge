@@ -1,6 +1,8 @@
 package com.kadziela.games.bridge.controllers;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +26,7 @@ public class RoomController
 	
 	@MessageMapping("/room/enter")
 	@SendTo("/topic/room")
-	public Collection<Player> enter(String name)
+	public Map<String,Collection<Player>> enter(String name)
 	{
 		logger.debug(String.format("Room Controller received the request for %s to enter the room", name));
 	    try
@@ -41,6 +43,6 @@ public class RoomController
 		    messagingTemplate.convertAndSend("/topic/errors",
 	    		MapUtil.mappifyMessage("error",String.format("Unable to create a new player with username: %s, because that name is already in use ",name)));	    	
 	    }	    
-	    return roomService.getPlayers();
+	    return Collections.singletonMap("players", roomService.getPlayers());
 	}
 }
