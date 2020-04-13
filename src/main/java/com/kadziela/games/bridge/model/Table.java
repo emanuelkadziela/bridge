@@ -119,6 +119,7 @@ public class Table implements NeedsCleanup
 			logger.debug("fourth card completes the trick");
 			Trick trick = new Trick(partialTrick.get(0),partialTrick.get(1),partialTrick.get(2),card,currentContract.getSuit());
 			partialTrick.clear();
+			tricks.add(trick);
 			return trick;
 		}
 		partialTrick.add(card);
