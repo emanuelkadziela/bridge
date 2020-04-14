@@ -47,13 +47,17 @@ public class Table implements NeedsCleanup
 	}
 	public void setCurrentDealer(SeatedPlayer cd) {currentDealer = cd;}	
 	public void addValidatedBid(Bid validatedBid) {bids.add(validatedBid);}
-	
+	public int playersSitting() {return players.size();}
 	public void sitDown(SeatPosition sp, Player p) throws IllegalStateException
 	{
 		SeatedPlayer extantOccupant = players.get(sp); 
 		if (extantOccupant != null)
 		{
 			throw new IllegalStateException("someone ("+extantOccupant+") is already seated in position "+sp+" so player "+p+" cannot sit down there");
+		}
+		if (players.size() >= 4)
+		{
+			throw new IllegalStateException("Therre are 4 players already at this table");
 		}
 		players.put(sp, new SeatedPlayer(sp, p));		
 	}

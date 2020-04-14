@@ -97,18 +97,18 @@ public class TableController
 	    	
 	    	Player player = roomService.findByName(playerName);
 	    	Assert.notNull(player,String.format("Player named %s is not in the room",playerName));
-	    	Table table = tableService.sitDown(player, Long.valueOf(tableId), SeatPosition.valueOf(position));
+	    	boolean open = tableService.sitDown(player, Long.valueOf(tableId), SeatPosition.valueOf(position));
 	    	
 	    	messagingTemplate.convertAndSend("/queue/private/"+playerName, MapUtil.mappifyMessage( 
     			String.format("you have successfully sat down at table %s in position %s",tableId,position)));
 
     		Map<String,Object> response = MapUtil.mappifyMessage(String.format("player %s has successfully sat down at table %s in position %s",playerName,tableId,position));
     		response.put("playerName", playerName);
-    		response.put("table", table);
+    		response.put("tableId", tableId);
     		response.put("position", position);    		
 	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, response);
 	    	
-	    	if(table.getAllSeatedPlayers().size() == 4)
+	    	if(open == false)
 	    	{
 	    		logger.debug(String.format("4 players have sat down at table %s, so dealing will commence shortly ",tableId));
 	    		deal(Long.valueOf(tableId));

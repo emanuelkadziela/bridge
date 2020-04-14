@@ -47,12 +47,24 @@ public class TableService
 	{
 		return new HashSet<Long>(tables.keySet());
 	}
-	public Table sitDown(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException
+	/**
+	 * Seats a player at a table in an available seat. If there are four player sitting, will return false. 
+	 * @param player the player to seat
+	 * @param tableId the id of the table
+	 * @param position the position where this player wants to sit
+	 * @return true if there are more open seats, false otherwise
+	 * @throws IllegalArgumentException - if the table cannot be found, or a player already sits in the position requested, etc.
+	 * @throws IllegalStateException if the table is already full and more players are trying to sit, etc.
+	 */
+	public synchronized boolean sitDown(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException
 	{
 		Table table = tables.get(tableId);
 		Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
+		logger.info("trying to seat player: {} at table: {} and position: {}. So far {} players are sitting at this table.",player,tableId,position,table.playersSitting());
+		if (table.playersSitting() >= 4) throw new IllegalStateException(String.format("this table (%s) already has 4 players sitting",tableId));
 		table.sitDown(position, player);
-		return table;
+		if (table.playersSitting() == 4) return false;			
+		return true;
 	}
 	public Table standUp(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException
 	{
