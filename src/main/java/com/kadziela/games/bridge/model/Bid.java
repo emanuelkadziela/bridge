@@ -26,6 +26,10 @@ public class Bid
 		result = prime * result + ((seatedPlayer == null) ? 0 : seatedPlayer.hashCode());
 		return result;
 	}
+	public Bid getCopyWithoutHands()
+	{
+		return new Bid(seatedPlayer.getCopyWithoutHands(),bid);		
+	}
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

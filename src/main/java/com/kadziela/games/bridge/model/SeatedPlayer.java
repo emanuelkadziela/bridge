@@ -59,6 +59,12 @@ public class SeatedPlayer implements NeedsCleanup
 	public void setVulnerable(boolean vul) {vulnerable = vul;}
 	public Collection<Card> getHandCopy() {return new TreeSet<Card>(hand);}
 	public Collection<Card> getPersistentHandCopy() {return new TreeSet<Card>(persistentHand);}
+	public SeatedPlayer getCopyWithoutHands()
+	{
+		SeatedPlayer copy = new SeatedPlayer(position, player);
+		copy.setVulnerable(vulnerable);
+		return copy;
+	}
 	@Override
 	public int hashCode() {
 		final int prime = 31;

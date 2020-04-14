@@ -37,6 +37,13 @@ public final class Contract
 	public BidSuit getSuit() {return suit;}
 	public int getLevel() {return level;}
 
+	public List<Bid> getBidsWithoutHands()
+	{
+		List<Bid> result = new ArrayList<Bid>();
+		for (Bid bid:bids) result.add(bid.getCopyWithoutHands());
+		return result;			
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

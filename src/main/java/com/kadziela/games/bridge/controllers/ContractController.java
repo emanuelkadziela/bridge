@@ -65,8 +65,10 @@ public class ContractController
 					MapUtil.mappifyMessage("The last bid was a third pass, the contract has been made"));
 				Contract contract = table.createNewContract();
 				Map<String,Object> response = MapUtil.mappifyMessage("contract", contract);
-				response.put("bids",contract.getBids());
+				response.put("bids",contract.getBidsWithoutHands());
 				response.put("nextPosition", SeatPosition.nextPlayer(contract.getDeclarer().getPosition()));
+				response.put("dummy", SeatPosition.getPartner(contract.getDeclarer().getPosition()));
+				response.put("dummyHand", table.getPlayerAtPosition(SeatPosition.getPartner(contract.getDeclarer().getPosition())).getHandCopy());
 				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),response);
 				return;
 			}
