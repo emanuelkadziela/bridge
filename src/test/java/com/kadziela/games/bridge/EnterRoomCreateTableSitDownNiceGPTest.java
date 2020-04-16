@@ -21,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
@@ -38,6 +39,7 @@ import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.Message;
 import com.kadziela.games.bridge.model.Player;
 import com.kadziela.games.bridge.model.Table;
+import com.kadziela.games.bridge.service.TableService;
 import com.kadziela.games.bridge.util.TestUtils;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -49,6 +51,8 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 	 private int port;
 	 private String URL;
 	 
+	 @Autowired TableService tableService;
+
 	 private BlockingQueue<Map<String,Object>> messageQueue = new LinkedBlockingQueue<Map<String,Object>>();
 	 
 	 @Test
@@ -98,10 +102,10 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 	 private Long enterRoomAndCreateTable(StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {			
 			stompSession.subscribe("/topic/room", new QueueStompFrameHandler());			
-			enterPlayer("North", 1, stompSession);
-			enterPlayer("South", 2, stompSession);
-			enterPlayer("East", 3, stompSession);
-			enterPlayer("West", 4, stompSession);			
+			enterPlayer("North", stompSession);
+			enterPlayer("South", stompSession);
+			enterPlayer("East", stompSession);
+			enterPlayer("West", stompSession);			
 			Long externalId = System.currentTimeMillis();
 			stompSession.send("/app/table/openNewWithExternalId", externalId);
 			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
@@ -109,11 +113,11 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 			Map<String,Object> map = messages.get(0);						
 			logger.info("Attempted to open a new table with external id {}, this message was sent to the /topic/room channel: {} ",externalId,map);
 			assertNotNull(map);
-			Map<String,Object> table = (Map<String,Object>) map.get("table");
+			Table table = tableService.findByExternalId(externalId);
 			logger.info("table = {} ", table);
-			return (Long) table.get("id");
+			return table.getId();
 	 }
-	 private void enterPlayer(String name, int expectedCount,StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 private void enterPlayer(String name, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
 			stompSession.send("/app/room/enter", name);
 			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
@@ -122,7 +126,6 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 			Map<String,Object> map = messages.get(0);
 			List players = (List) map.get("players");
 			assertNotNull(players);
-			assertEquals(expectedCount,players.size());
 			String name2 = null;
 			for (Object player:players)
 			{

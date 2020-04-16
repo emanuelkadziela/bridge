@@ -89,43 +89,5 @@ public class TableTest
 		assertEquals(2,table.getTricks().size());
 		trick = table.getTricks().get(1);
 		assertEquals(new PlayedCard(new Card(Rank.ACE,Suit.CLUBS), SeatPosition.NORTH), trick.getWinner());
-		
-		/*
-		 * 		Assert.state(tricks.size() < 13, "13 (or more?) tricks have already been played");
-		Assert.state(partialTrick.size() < 4, "more than 4 cards have been played for one trick");
-		Assert.isTrue((players.get(card.getPosition()).hasCard(card.getCard())), String.format("player %s is not holding card %s",card.getPosition(),card.getCard()));			
-		SeatPosition leader = SeatPosition.nextPlayer(currentContract.getDeclarer().getPosition());
-		if (!tricks.isEmpty())
-		{
-			leader = tricks.get(tricks.size()-1).getWinner().getPosition();
-		}
-		if (partialTrick.isEmpty())
-		{
-			Assert.isTrue(card.getPosition().equals(leader),String.format("the card should be played by %s, not %s",leader,card.getPosition()));
-			players.get(leader).playCard(card.getCard());
-			partialTrick.add(card);
-			return null;
-		}
-		PlayedCard previous = partialTrick.get(partialTrick.size()-1);
-		SeatPosition throwCard = SeatPosition.nextPlayer(previous.getPosition());
-		Assert.isTrue(card.getPosition().equals(throwCard),String.format("the card should be played by %s, not %s",throwCard,card.getPosition()));
-		Suit led = partialTrick.get(0).getCard().getSuit();
-		if(!(led.equals(card.getCard().getSuit())))			
-		{
-			Assert.isTrue((!players.get(card.getPosition()).hasSuit(led)), String.format("%s was led and %s has cards in that suit, must follow suit",led,card.getPosition()));			
-		}
-		players.get(card.getPosition()).playCard(card.getCard());
-		if (partialTrick.size() == 3)
-		{
-			logger.debug("fourth card completes the trick");
-			Trick trick = new Trick(partialTrick.get(0),partialTrick.get(1),partialTrick.get(2),card,currentContract.getSuit());
-			partialTrick.clear();
-			return trick;
-		}
-		partialTrick.add(card);
-		return null;
-
-		 */
-		
 	}
 }

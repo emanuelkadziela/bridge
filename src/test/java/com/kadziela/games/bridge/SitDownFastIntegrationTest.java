@@ -38,6 +38,7 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.Message;
 import com.kadziela.games.bridge.model.Player;
+import com.kadziela.games.bridge.model.Table;
 import com.kadziela.games.bridge.service.TableService;
 import com.kadziela.games.bridge.util.TestUtils;
 
@@ -135,25 +136,16 @@ public class SitDownFastIntegrationTest
 			stompSession.send("/app/room/enter", "E2");
 			stompSession.send("/app/room/enter", "W2");
 			
-			stompSession.send("/app/table/openNew", null);
+			Long externalId = System.currentTimeMillis();
+			stompSession.send("/app/table/openNewWithExternalId", externalId);
 			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
-			logger.info("Attempted to open a new table, this message was sent to the /topic/room channel: {} ",messages);
 			assertNotNull(messages);
-			Long tableId = 0l;
-			for (Map map:messages)
-			{
-				if (map.containsKey("tableIds"))
-				{
-					Collection tIds = (Collection) map.get("tableIds");
-					for (Object id:tIds)
-					{
-						Long lId = (Long) id;
-						if (lId > tableId) tableId = lId;
-					}
-				}
-			}
-			logger.info("tableId = {}",tableId);
-			return tableId;
+			Map<String,Object> map = messages.get(0);						
+			logger.info("Attempted to open a new table with external id {}, this message was sent to the /topic/room channel: {} ",externalId,map);
+			assertNotNull(map);
+			Table table = tableService.findByExternalId(externalId);
+			logger.info("table = {} ", table);
+			return table.getId();
 	 }
 	 private List<Transport> createTransportClient() 
 	 {

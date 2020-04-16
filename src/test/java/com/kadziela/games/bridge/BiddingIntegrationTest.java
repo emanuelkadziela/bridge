@@ -38,9 +38,11 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.Message;
 import com.kadziela.games.bridge.model.Player;
+import com.kadziela.games.bridge.model.Table;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 import com.kadziela.games.bridge.service.TableService;
+import com.kadziela.games.bridge.util.TestUtils;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class BiddingIntegrationTest 
@@ -53,7 +55,7 @@ public class BiddingIntegrationTest
 	
 	 @Autowired TableService tableService;
 	 
-	 private BlockingQueue<Map> messageQueue = new LinkedBlockingQueue<Map>();
+	 private BlockingQueue<Map<String,Object>> messageQueue = new LinkedBlockingQueue<Map<String,Object>>();
 	 
 	 @Test
 	 public void testCreateGameEndpoint() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException 
@@ -65,10 +67,10 @@ public class BiddingIntegrationTest
 
 		stompSession.subscribe("/topic/errors/", new ErrorStompFrameHandler());
 		
-//		Long tableId = enterRoomAndCreateTable(stompSession);	    
-//		SeatPosition dealer = sitDown(tableId,stompSession);
-//		logger.info("the dealer is {}",dealer);
-//		doBidding(dealer, tableId, stompSession);
+		Long tableId = enterRoomAndCreateTable(stompSession);	    
+		SeatPosition dealer = sitDown(tableId,stompSession);
+		logger.info("the dealer is {}",dealer);
+		doBidding(dealer, tableId, stompSession);
 	 }
 	 private void doBidding(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
@@ -87,16 +89,7 @@ public class BiddingIntegrationTest
 		 position = SeatPosition.nextPlayer(position);
 		 attributes.put("position", position.toString());		 
 		 stompSession.send("/app/contract/bid", attributes);
-		 List<Map> messages = new ArrayList<Map>();
-		 while (true)
-		 {
-			 Map map = messageQueue.poll(5, TimeUnit.SECONDS);
-			 if (map != null) 
-			 {
-				 messages.add(map);
-			 }
-			 else break;
-		 }
+		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
 		 logger.info("messages = {}", messages);
 	 }
 	 private SeatPosition sitDown(Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
@@ -123,16 +116,7 @@ public class BiddingIntegrationTest
 			attributes.put("position", "WEST");
 			stompSession.send("/app/table/sitDown", attributes);
 			
-			List<Map> messages = new ArrayList<Map>();
-			while (true)
-			{
-				Map map = messageQueue.poll(5, TimeUnit.SECONDS);
-				if (map != null) 
-				{
-					messages.add(map);
-				}
-				else break;
-			}
+			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
 			logger.info("sat daown 4 players at one table, here are the messages: {}",messages);
 			assertEquals(4,tableService.findById(tableId).playersSitting());
 			int dealerSelectedMessageCount = 0;
@@ -159,34 +143,16 @@ public class BiddingIntegrationTest
 			stompSession.send("/app/room/enter", "EBid");
 			stompSession.send("/app/room/enter", "WBid");
 						
-			stompSession.send("/app/table/openNew", null);
-			List<Map> messages = new ArrayList<Map>();
-			while (true)
-			{
-				Map map = messageQueue.poll(5, TimeUnit.SECONDS);
-				if (map != null) 
-				{
-					messages.add(map);
-				}
-				else break;
-			}
-			logger.info("Attempted to open a new table, this message was sent to the /topic/room channel: {} ",messages);
+			Long externalId = System.currentTimeMillis();
+			stompSession.send("/app/table/openNewWithExternalId", externalId);
+			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
 			assertNotNull(messages);
-			Long tableId = 0l;
-			for (Map map:messages)
-			{
-				if (map.containsKey("tableIds"))
-				{
-					Collection tIds = (Collection) map.get("tableIds");
-					for (Object id:tIds)
-					{
-						Long lId = (Long) id;
-						if (lId > tableId) tableId = lId;
-					}
-				}
-			}
-			logger.info("tableId = {}",tableId);
-			return tableId;
+			Map<String,Object> map = messages.get(0);						
+			logger.info("Attempted to open a new table with external id {}, this message was sent to the /topic/room channel: {} ",externalId,map);
+			assertNotNull(map);
+			Table table = tableService.findByExternalId(externalId);
+			logger.info("table = {} ", table);
+			return table.getId();
 	 }
 	 private List<Transport> createTransportClient() 
 	 {
