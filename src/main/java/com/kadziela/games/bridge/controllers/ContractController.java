@@ -28,7 +28,6 @@ public class ContractController
 	private static final Logger logger = LogManager.getLogger(ContractController.class);
 
 	@Autowired private ContractService contractService;
-	@Autowired private TableService tableService;
 	@Autowired private SimpMessageSendingOperations messagingTemplate;
 
 	/**
@@ -44,7 +43,6 @@ public class ContractController
     	String tableId = null;
     	String position = null;
     	String bid = null;
-		logger.debug(String.format("Contract Controller received a bid request with the following attributes %s", attributes.toString()));
 	    try
 	    {
 			Assert.notNull(attributes,"the input attributes canot be null");
@@ -54,33 +52,10 @@ public class ContractController
 			Assert.notNull(tableId, "tableId must be passed into this method inside the attributes parameter");
 			Assert.notNull(position, "position must be passed into this method inside the attributes parameter");
 			Assert.notNull(bid, "bid must be passed into this method inside the attributes parameter");
-			Table table = tableService.findById(Long.valueOf(tableId));
 			SeatPosition sp = SeatPosition.valueOf(position);
 			ValidBidOption vbo = ValidBidOption.valueOf(bid);
-			SeatedPlayer seatedPlayer = table.getPlayerAtPosition(sp);
-			Bid b = contractService.bid(seatedPlayer, vbo, table);
-			if (contractMade(table))
-			{
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),
-					MapUtil.mappifyMessage("The last bid was a third pass, the contract has been made"));
-				Contract contract = table.createNewContract();
-				Map<String,Object> response = MapUtil.mappifyMessage("contract", contract);
-				response.put("bids",contract.getBidsWithoutHands());
-				response.put("nextPosition", SeatPosition.nextPlayer(contract.getDeclarer().getPosition()));
-				response.put("dummy", SeatPosition.getPartner(contract.getDeclarer().getPosition()));
-				response.put("dummyHand", table.getPlayerAtPosition(SeatPosition.getPartner(contract.getDeclarer().getPosition())).getHandCopy());
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),response);
-				return;
-			}
-			if (redeal(table))
-			{
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),
-					MapUtil.mappifyMessage("The last bid was a fourth pass, redeal"));
-				return;
-			}
-			Map<String,Object> response = MapUtil.mappifyMessage(String.format("Valid bid: %s",bid));
-			response.put("nextPosition", SeatPosition.nextPlayer(sp));
-			messagingTemplate.convertAndSend(String.format("/topic/table/%s",table.getId()),response);			
+			Map<String,Object> response = contractService.bid(sp, vbo, Long.valueOf(tableId));
+			messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),response);
 	    }
 	    catch (IllegalArgumentException iae)
 	    {
@@ -95,24 +70,5 @@ public class ContractController
 		    		MapUtil.mappifyMessage("error",String.format("An IllegalStateException occurred while trying to bid %s at table %s and position %s. The error message is: %s",bid,tableId,position,ise.getMessage())));	    	
 	    }	    
 
-	}
-	private boolean contractMade(Table table)
-	{
-		if (table.getCurrentBidOptions().size() > 3 &&
-			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-1).equals(ValidBidOption.PASS) && 
-			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-2).equals(ValidBidOption.PASS) && 
-			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-3).equals(ValidBidOption.PASS)) 		
-			return true;		
-		return false;
-	}
-	private boolean redeal(Table table)
-	{
-		if (table.getCurrentBidOptions().size() == 3 &&
-			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-1).equals(ValidBidOption.PASS) && 
-			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-2).equals(ValidBidOption.PASS) && 
-			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-3).equals(ValidBidOption.PASS) &&
-			table.getCurrentBidOptions().get(table.getCurrentBidOptions().size()-4).equals(ValidBidOption.PASS)) 		
-			return true;		
-		return false;
 	}
 }

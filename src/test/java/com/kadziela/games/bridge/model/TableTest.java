@@ -19,27 +19,30 @@ import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.Suit;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 import com.kadziela.games.bridge.service.ContractService;
+import com.kadziela.games.bridge.service.TableService;
 
 @SpringBootTest
 public class TableTest 
 {	
 	@Autowired ContractService contractService; 
+	@Autowired TableService tableService; 
 	
 	@Test
 	void testPlayCard()
 	{
-		Table table = new Table();
-		table.sitDown(SeatPosition.NORTH, new Player("north"));
-		table.sitDown(SeatPosition.EAST, new Player("east"));
-		table.sitDown(SeatPosition.SOUTH, new Player("south"));
-		table.sitDown(SeatPosition.WEST, new Player("west"));
+		Long id = System.currentTimeMillis();
+		Table table = tableService.create(id);
+		tableService.sitDown(new Player("North"), table.getId(), SeatPosition.NORTH);
+		tableService.sitDown(new Player("South"), table.getId(), SeatPosition.SOUTH);
+		tableService.sitDown(new Player("East"), table.getId(), SeatPosition.EAST);
+		tableService.sitDown(new Player("West"), table.getId(), SeatPosition.WEST);
 
 		table.setCurrentDealer(table.getPlayerAtPosition(SeatPosition.NORTH));
 		
-		contractService.bid(table.getPlayerAtPosition(SeatPosition.NORTH), ValidBidOption.ONE_CLUBS, table);
-		contractService.bid(table.getPlayerAtPosition(SeatPosition.EAST), ValidBidOption.PASS, table);
-		contractService.bid(table.getPlayerAtPosition(SeatPosition.SOUTH), ValidBidOption.PASS, table);
-		contractService.bid(table.getPlayerAtPosition(SeatPosition.WEST), ValidBidOption.PASS, table);
+		contractService.bid(SeatPosition.NORTH, ValidBidOption.ONE_CLUBS, table.getId());
+		contractService.bid(SeatPosition.EAST, ValidBidOption.PASS, table.getId());
+		contractService.bid(SeatPosition.SOUTH, ValidBidOption.PASS, table.getId());
+		contractService.bid(SeatPosition.WEST, ValidBidOption.PASS, table.getId());
 				
 		List<Card> cards = new ArrayList<Card>();
 		cards.add(new Card(Rank.ACE,Suit.CLUBS));

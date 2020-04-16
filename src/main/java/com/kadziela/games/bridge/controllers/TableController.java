@@ -48,6 +48,17 @@ public class TableController
 		return getAll();
 	}
 	/**
+	 * Opens a new table with a provided external id for future correlation/reference
+	 * @return the newly created table
+	 */
+	@MessageMapping("/table/openNewWithExternalId")
+	@SendTo("/topic/room")
+	public Map<String,Object> openNewWithExternalId(Long externalId)
+	{
+		logger.debug("opening a new table");
+		return Collections.singletonMap("table", tableService.create(externalId));
+	}
+	/**
 	 * Returns a collection of all table ids in the room, sending it to the /topic/room destination
 	 * @return a collection of all table ids in the room
 	 */

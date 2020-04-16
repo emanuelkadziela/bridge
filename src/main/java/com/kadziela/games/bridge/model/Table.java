@@ -24,6 +24,7 @@ public class Table implements NeedsCleanup
 	private static final Logger logger = LogManager.getLogger(Table.class);
 
 	private final Long id = System.currentTimeMillis();
+	private Long externalId;
 	private final Map<SeatPosition,SeatedPlayer> players = new ConcurrentHashMap<>();
 	private final List<Bid> bids = new CopyOnWriteArrayList<>();
 	private final Deck deck = new Deck();
@@ -32,6 +33,9 @@ public class Table implements NeedsCleanup
 	private final List<Trick> tricks = new CopyOnWriteArrayList<>();
 	private final List<PlayedCard> partialTrick = new CopyOnWriteArrayList<>();
 	
+	public Table() {}
+	public Table(Long eId) {externalId = eId;}
+	
 	public Long getId() {return id;}	
 	public Deck getDeck() {return deck;}
 	public SeatedPlayer getCurrentDealer() {return currentDealer;}
@@ -39,6 +43,7 @@ public class Table implements NeedsCleanup
 	public Collection<SeatedPlayer> getAllSeatedPlayers(){return new HashSet<> (players.values());}
 	public List<Bid> getCurrentBids() {return new ArrayList<>(bids);}
 	public List<Trick> getTricks() {return new ArrayList<>(tricks);}
+	public Long getExternalId() {return externalId;}
 	public synchronized List<ValidBidOption> getCurrentBidOptions()
 	{
 		List<ValidBidOption> options = new ArrayList<ValidBidOption>();

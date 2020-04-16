@@ -37,6 +37,8 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.Message;
 import com.kadziela.games.bridge.model.Player;
+import com.kadziela.games.bridge.model.Table;
+import com.kadziela.games.bridge.util.TestUtils;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class EnterRoomCreateTableSitDownNiceGPTest 
@@ -47,8 +49,7 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 	 private int port;
 	 private String URL;
 	 
-	 private CompletableFuture<Map> messageFuture = new CompletableFuture<>();
-	 private BlockingQueue<Map> messageQueue = new LinkedBlockingQueue<Map>();
+	 private BlockingQueue<Map<String,Object>> messageQueue = new LinkedBlockingQueue<Map<String,Object>>();
 	 
 	 @Test
 	 public void testCreateGameEndpoint() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException 
@@ -61,193 +62,74 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 		stompSession.subscribe("/topic/errors/", new ErrorStompFrameHandler());
 		
 		Long tableId = enterRoomAndCreateTable(stompSession);	    
-		sitDown(tableId,stompSession);
-		
+		sitDown(tableId,stompSession);		
 	 }
 	 private void sitDown(Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
-			stompSession.subscribe("/topic/table/"+tableId, new SitDownStompFrameHandler());
-
-			Map<String,String> attributes = new HashMap<String,String>();
-			attributes.put("playerName", "North");
-			attributes.put("tableId", String.valueOf(tableId));
-			attributes.put("position", "NORTH");
-			stompSession.send("/app/table/sitDown", attributes);
-			List<Map> messages = new ArrayList<Map>();
-			while (true)
-			{
-				Map map = messageQueue.poll(5, TimeUnit.SECONDS);
-				if (map != null) 
-				{
-					messages.add(map);
-				}
-				else break;
-			}
-			logger.info("Player North attempted to sit in the NORTH seat at table {}, the /topic/table/{} channel received the following messages: {} ",tableId,tableId,messages);
-			assertNotNull(messages);
-			assertEquals(1, messages.size());
-			Map mm = messages.get(0);
-			assertNotNull(mm);
-			assertEquals(4, mm.size());
-			assertEquals("North", mm.get("playerName"));
-			assertEquals("NORTH", mm.get("position"));
-			assertEquals(String.valueOf(tableId), mm.get("tableId"));
-			assertTrue(((String) mm.get("message")).contains("successfully sat down"));
-			
-			attributes = new HashMap<String,String>();
-			attributes.put("playerName", "South");
-			attributes.put("tableId", String.valueOf(tableId));
-			attributes.put("position", "SOUTH");
-			stompSession.send("/app/table/sitDown", attributes);
-			messages = new ArrayList<Map>();
-			while (true)
-			{
-				Map map = messageQueue.poll(5, TimeUnit.SECONDS);
-				if (map != null) 
-				{
-					messages.add(map);
-				}
-				else break;
-			}
-			logger.info("Player South attempted to sit in the SOUTH seat at table {}, the /topic/table/{} channel received the following messages: {} ",tableId,tableId,messages);
-			assertNotNull(messages);
-			assertEquals(1, messages.size());
-			mm = messages.get(0);
-			assertNotNull(mm);
-			assertEquals(4, mm.size());
-			assertEquals("South", mm.get("playerName"));
-			assertEquals("SOUTH", mm.get("position"));
-			assertEquals(String.valueOf(tableId), mm.get("tableId"));
-			assertTrue(((String) mm.get("message")).contains("successfully sat down"));
-			
-			attributes = new HashMap<String,String>();
-			attributes.put("playerName", "East");
-			attributes.put("tableId", String.valueOf(tableId));
-			attributes.put("position", "EAST");
-			stompSession.send("/app/table/sitDown", attributes);
-			messages = new ArrayList<Map>();
-			while (true)
-			{
-				Map map = messageQueue.poll(5, TimeUnit.SECONDS);
-				if (map != null) 
-				{
-					messages.add(map);
-				}
-				else break;
-			}
-			logger.info("Player East attempted to sit in the EAST seat at table {}, the /topic/table/{} channel received the following messages: {} ",tableId,tableId,messages);
-			assertNotNull(messages);
-			assertEquals(1, messages.size());
-			mm = messages.get(0);
-			assertNotNull(mm);
-			assertEquals(4, mm.size());
-			assertEquals("East", mm.get("playerName"));
-			assertEquals("EAST", mm.get("position"));
-			assertEquals(String.valueOf(tableId), mm.get("tableId"));
-			assertTrue(((String) mm.get("message")).contains("successfully sat down"));
-			
-			attributes = new HashMap<String,String>();
-			attributes.put("playerName", "West");
-			attributes.put("tableId", String.valueOf(tableId));
-			attributes.put("position", "WEST");
-			stompSession.send("/app/table/sitDown", attributes);
-			messages = new ArrayList<Map>();
-			while (true)
-			{
-				Map map = messageQueue.poll(5, TimeUnit.SECONDS);
-				if (map != null) 
-				{
-					messages.add(map);
-				}
-				else break;
-			}
-			logger.info("Player West attempted to sit in the WEST seat at table {}, the /topic/table/{} channel received the following messages: {} ",tableId,tableId,messages);
-			assertNotNull(messages);
-			assertEquals(3, messages.size());
-			mm = messages.get(0);
-			assertNotNull(mm);
-			assertEquals(4, mm.size());
-			assertEquals("West", mm.get("playerName"));
-			assertEquals("WEST", mm.get("position"));
-			assertEquals(String.valueOf(tableId), mm.get("tableId"));
-			assertTrue(((String) mm.get("message")).contains("successfully sat down"));
-			
-			mm = messages.get(1);
-			assertNotNull(mm.get("cardsBySeat"));
-			
+			stompSession.subscribe("/topic/table/"+tableId, new QueueStompFrameHandler());
+			sitPlayer("North","NORTH",String.valueOf(tableId),stompSession);
+			sitPlayer("South","SOUTH",String.valueOf(tableId),stompSession);
+			sitPlayer("East","EAST",String.valueOf(tableId),stompSession);
+			List<Map<String,Object>> messages = sitPlayer("West","WEST",String.valueOf(tableId),stompSession);						
+			Map<String,Object> mm = messages.get(1);
+			assertNotNull(mm.get("cardsBySeat"));			
 			mm = messages.get(2);
-			assertNotNull(mm.get("dealer"));			
-			
+			assertNotNull(mm.get("dealer"));						
+	 }
+	 private List<Map<String,Object>> sitPlayer(String name, String position, String table, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 {
+			Map<String,String> attributes = new HashMap<String,String>();
+			attributes.put("playerName", name);
+			attributes.put("tableId", table);
+			attributes.put("position", position);
+			stompSession.send("/app/table/sitDown", attributes);
+			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
+			logger.info("Player {} attempted to sit in the {} seat at table {}, the /topic/table/{} channel received the following messages: {} ",name,position,table,table,messages);
+			assertNotNull(messages);
+			Map<String,Object> mm = messages.get(0);
+			assertNotNull(mm);
+			assertEquals(4, mm.size());
+			assertEquals(name, mm.get("playerName"));
+			assertEquals(position, mm.get("position"));
+			assertEquals(table, mm.get("tableId"));
+			assertTrue(((String) mm.get("message")).contains("successfully sat down"));
+			return messages;
 	 }
 	 private Long enterRoomAndCreateTable(StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {			
-			stompSession.subscribe("/topic/room", new EnterRoomStompFrameHandler());
-			
-			stompSession.send("/app/room/enter", "North");
-			Map map = messageFuture.get(10, TimeUnit.SECONDS);
-			logger.info("Player North attempted to enter the room, this message was sent to the /topic/room channel: {} ",map);
+			stompSession.subscribe("/topic/room", new QueueStompFrameHandler());			
+			enterPlayer("North", 1, stompSession);
+			enterPlayer("South", 2, stompSession);
+			enterPlayer("East", 3, stompSession);
+			enterPlayer("West", 4, stompSession);			
+			Long externalId = System.currentTimeMillis();
+			stompSession.send("/app/table/openNewWithExternalId", externalId);
+			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
+			assertNotNull(messages);
+			Map<String,Object> map = messages.get(0);						
+			logger.info("Attempted to open a new table with external id {}, this message was sent to the /topic/room channel: {} ",externalId,map);
 			assertNotNull(map);
+			Map<String,Object> table = (Map<String,Object>) map.get("table");
+			logger.info("table = {} ", table);
+			return (Long) table.get("id");
+	 }
+	 private void enterPlayer(String name, int expectedCount,StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 {
+			stompSession.send("/app/room/enter", name);
+			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
+			logger.info("Player {} attempted to enter the room, this message was sent to the /topic/room channel: {} ",name,messages);
+			assertNotNull(messages);
+			Map<String,Object> map = messages.get(0);
 			List players = (List) map.get("players");
 			assertNotNull(players);
-			assertEquals(1,players.size());
-			String name = (String) ((Map) players.get(0)).get("name");
-			assertEquals("North",name);
-
-			messageFuture = new CompletableFuture<Map>();			
-			stompSession.send("/app/room/enter", "South");
-			map = messageFuture.get(10, TimeUnit.SECONDS);
-			logger.info("Player South attempted to enter the room, this message was sent to the /topic/room channel: {} ",map);
-			assertNotNull(map);
-			players = (List) map.get("players");
-			assertNotNull(players);
-			assertEquals(2,players.size());
+			assertEquals(expectedCount,players.size());
+			String name2 = null;
 			for (Object player:players)
 			{
-				name = (String) ((Map) player).get("name");
-				if (name.contentEquals("South")) break;
+				name2 = (String) ((Map) player).get("name");
+				if (name2.contentEquals(name)) break;
 			}
-			assertEquals("South",name);
-
-			messageFuture = new CompletableFuture<Map>();			
-			stompSession.send("/app/room/enter", "East");
-			map = messageFuture.get(10, TimeUnit.SECONDS);
-			logger.info("Player East attempted to enter the room, this message was sent to the /topic/room channel: {} ",map);
-			assertNotNull(map);
-			players = (List) map.get("players");
-			assertNotNull(players);
-			assertEquals(3,players.size());
-			for (Object player:players)
-			{
-				name = (String) ((Map) player).get("name");
-				if (name.contentEquals("East")) break;
-			}
-			assertEquals("East",name);
-
-			messageFuture = new CompletableFuture<Map>();
-			stompSession.send("/app/room/enter", "West");
-			map = messageFuture.get(10, TimeUnit.SECONDS);
-			logger.info("Player West attempted to enter the room, this message was sent to the /topic/room channel: {} ",map);
-			assertNotNull(map);
-			players = (List) map.get("players");
-			assertNotNull(players);
-			assertEquals(4,players.size());
-			for (Object player:players)
-			{
-				name = (String) ((Map) player).get("name");
-				if (name.contentEquals("West")) break;
-			}
-			assertEquals("West",name);
-
-			messageFuture = new CompletableFuture<Map>();
-			stompSession.send("/app/table/openNew", null);
-			map = messageFuture.get(10, TimeUnit.SECONDS);
-			logger.info("Attempted to open a new table, this message was sent to the /topic/room channel: {} ",map);
-			assertNotNull(map);
-			List ids = (List) map.get("tableIds");
-			assertEquals(1,ids.size());
-			Long tableId = (Long) ids.get(0);
-			logger.info("tableId = {}",tableId);
-			return tableId;
+			assertEquals(name,name2);		 
 	 }
 	 private List<Transport> createTransportClient() 
 	 {
@@ -255,22 +137,7 @@ public class EnterRoomCreateTableSitDownNiceGPTest
         transports.add(new WebSocketTransport(new StandardWebSocketClient()));
         return transports;
 	 }
-	 private class EnterRoomStompFrameHandler implements StompFrameHandler 
-	 {
-	 	@Override
-		public Type getPayloadType(StompHeaders stompHeaders) 
-		{
-		    logger.info("stompHeaders: {}",stompHeaders.toString());
-		    return Map.class;
-		}
-		@Override
-		public void handleFrame(StompHeaders stompHeaders, Object o) 
-		{
-			logger.info("handleFrame message payload: {} ",(Map) o);
-			messageFuture.complete((Map) o);
-		}
-	 }
-	 private class SitDownStompFrameHandler implements StompFrameHandler 
+	 private class QueueStompFrameHandler implements StompFrameHandler 
 	 {
 	 	@Override
 		public Type getPayloadType(StompHeaders stompHeaders) 

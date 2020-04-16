@@ -1,12 +1,14 @@
 package com.kadziela.games.bridge.service;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ import com.kadziela.games.bridge.model.Trick;
 import com.kadziela.games.bridge.model.enumeration.ScoreLineItem;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
+import com.kadziela.games.bridge.util.MapUtil;
 
 @Service
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
@@ -30,32 +33,43 @@ public class ContractService implements NeedsCleanup
 	private static final Logger logger = LogManager.getLogger(ContractService.class);
 	
 	private final Map<Long,List<ContractScore>> scores = new ConcurrentHashMap<Long, List<ContractScore>>();
-		
-	public Bid bid(SeatedPlayer seatedPlayer, ValidBidOption bid, Table table) throws IllegalArgumentException,IllegalStateException
+	
+	@Autowired private TableService tableService;
+
+	public synchronized Map<String,Object> bid(SeatPosition position, ValidBidOption bid, Long tableId) throws IllegalArgumentException,IllegalStateException
 	{
-		Assert.notNull(seatedPlayer, "player cannot be null");
+		Assert.notNull(position, "position cannot be null");
 		Assert.notNull(bid, "bid cannot be null");
-		Assert.notNull(table, "table cannot be null");
-		if (table.getCurrentBids().isEmpty())
-		{
-			if (!(seatedPlayer.equals(table.getCurrentDealer())))
-			{
-				throw new IllegalStateException(String.format("The first player to bid should be the dealer. The dealer is %s, and the player attempting to bid is %s",table.getCurrentDealer(),seatedPlayer));
-			}
-			if (!ValidBidOption.validBid(bid, null)) throw new IllegalArgumentException("Invalid bid");
-			Bid b = new Bid(seatedPlayer,bid);
-			table.addValidatedBid(b);
-			return b;
-		}
-		SeatPosition lastBidder = table.getCurrentBids().get(table.getCurrentBids().size()-1).getSeatedPlayer().getPosition();
-		if (!seatedPlayer.getPosition().equals(SeatPosition.nextPlayer(lastBidder)))
-		{
-			throw new IllegalStateException(String.format("The last position who bid was %s. The next should be %s, not %s",lastBidder,SeatPosition.nextPlayer(lastBidder),seatedPlayer.getPosition()));
-		}
+		Assert.notNull(tableId, "tableId cannot be null");
+		Table table = tableService.findById(Long.valueOf(tableId));
+		SeatedPlayer seatedPlayer = table.getPlayerAtPosition(position);
 		if(!ValidBidOption.validBid(bid, table.getCurrentBidOptions())) throw new IllegalArgumentException("Invalid bid");
+		SeatPosition shouldBid = table.getCurrentBids().isEmpty() ? table.getCurrentDealer().getPosition() : 
+			SeatPosition.nextPlayer(table.getCurrentBids().get(table.getCurrentBids().size()-1).getSeatedPlayer().getPosition());
+		if (!(position.equals(shouldBid))) throw new IllegalStateException(String.format("This bid was expected to come from %s , not %s",shouldBid,position));
 		Bid b = new Bid(seatedPlayer,bid);
 		table.addValidatedBid(b);
-		return b;
+		Map<String,Object> response = new HashMap<String,Object>();
+		response.put("message", new StringBuilder("Valid Bid Made. "));
+		response.put("position", position);
+		response.put("bid", bid);
+		response.put("nextPosition", SeatPosition.nextPlayer(position));
+		if (contractMade(table.getCurrentBidOptions()))
+		{
+			Contract contract = table.createNewContract();
+			((StringBuilder) response.get("message")).append("The bid was a third pass, the contract has been made");
+			response.put("contract",contract);
+			response.put("bids",contract.getBidsWithoutHands());
+			response.put("nextPosition", SeatPosition.nextPlayer(contract.getDeclarer().getPosition()));
+			response.put("dummy", SeatPosition.getPartner(contract.getDeclarer().getPosition()));
+			response.put("dummyHand", table.getPlayerAtPosition(SeatPosition.getPartner(contract.getDeclarer().getPosition())).getHandCopy());
+			return response;
+		}
+		if (redeal(table.getCurrentBidOptions()))
+		{
+			return MapUtil.mappifyMessage("The last bid was a fourth pass, redeal");
+		}		
+		return response;			
 	}
 	/**
 	 * Returns a map containing a breakdown of the scores by team, game, and over/under
@@ -222,5 +236,24 @@ public class ContractService implements NeedsCleanup
 			if (gameCounter > 3) throw new IllegalStateException("more than three games were either played or scored, so something is wrong"); 				
 		}
 		return scoreBreakdown;
+	}
+	private boolean contractMade(List<ValidBidOption> bids)
+	{
+		if (bids.size() > 3 &&
+			bids.get(bids.size()-1).equals(ValidBidOption.PASS) && 
+			bids.get(bids.size()-2).equals(ValidBidOption.PASS) && 
+			bids.get(bids.size()-3).equals(ValidBidOption.PASS)) 		
+			return true;		
+		return false;
+	}
+	private boolean redeal(List<ValidBidOption> bids)
+	{
+		if (bids.size() == 4 &&
+			bids.get(bids.size()-1).equals(ValidBidOption.PASS) && 
+			bids.get(bids.size()-2).equals(ValidBidOption.PASS) && 
+			bids.get(bids.size()-3).equals(ValidBidOption.PASS) &&
+			bids.get(bids.size()-4).equals(ValidBidOption.PASS)) 		
+			return true;		
+		return false;
 	}
 }

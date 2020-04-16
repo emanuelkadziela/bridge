@@ -31,6 +31,7 @@ public class TableService
 	private static final Logger logger = LogManager.getLogger(TableService.class);
 
 	private final Map<Long,Table> tables = new ConcurrentHashMap<Long,Table>();
+	private final Map<Long,Table> tablesByExternalId = new ConcurrentHashMap<Long,Table>();
 
 	/**
 	 * Creates a new, empty table and adds it to the internal collection
@@ -41,6 +42,13 @@ public class TableService
 	{
 		Table table = new Table();
 		tables.put(table.getId(), table);
+		return table;
+	}
+	public Table create(Long externalId)
+	{
+		Table table = new Table(externalId);
+		tables.put(table.getId(), table);
+		tablesByExternalId.put(externalId, table);
 		return table;
 	}
 	public Collection<Long> getAllTableIds() 
@@ -74,6 +82,7 @@ public class TableService
 		return table;
 	}
 	public Table findById(Long tableId) {return tables.get(tableId);}
+	public Table findByExternalId(Long externalId) {return tablesByExternalId.get(externalId);}
 	public void deal(Table table)
 	{
 		Assert.notNull(table, "Cannot deal on a null table");
