@@ -38,6 +38,7 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.Message;
 import com.kadziela.games.bridge.model.Player;
+import com.kadziela.games.bridge.model.SeatedPlayer;
 import com.kadziela.games.bridge.model.Table;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
@@ -75,7 +76,7 @@ public class BiddingIntegrationTest
 	 private void doBidding(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
 		 logger.info("bidding test: dealer = {}, tableId = {}",dealer,tableId);
-		 //doRedeal(dealer, tableId, stompSession);
+		 doRedeal(dealer, tableId, stompSession);
 		 doSimpleBid(dealer, tableId, stompSession);
 	 }
 	 private void doSimpleBid(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
@@ -113,7 +114,11 @@ public class BiddingIntegrationTest
 	 }
 	 private void doRedeal(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
-		 logger.info("testing four passes fo redeal: dealer = {}, tableId = {}",dealer,tableId);
+		 logger.info("testing four passes for redeal: dealer = {}, tableId = {}",dealer,tableId);
+		 
+		 logger.info("checking hands before four passes/redeal");
+		 checkHands(tableId);
+		 
 		 Map<String,String> attributes = new HashMap<String,String>();
 		 SeatPosition position = dealer;
 		 attributes.put("tableId", tableId.toString());
@@ -144,6 +149,17 @@ public class BiddingIntegrationTest
 			 if(((String) map.get("message")).contains("redeal")) redealMessage = true;
 		 }
 		 assertTrue(redealMessage);
+		 logger.info("checking hands after four passes/redeal");
+		 checkHands(tableId);
+		 
+	 }
+	 private void checkHands(Long tableId)
+	 {
+		 Table table = tableService.findById(tableId);
+		 for (SeatedPlayer player: table.getAllSeatedPlayers())
+		 {
+			 logger.info("position = {}, cards = {}", player.getPosition(),player.getHandCopy());
+		 }
 	 }
 	 private SeatPosition sitDown(Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {

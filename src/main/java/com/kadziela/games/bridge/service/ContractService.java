@@ -57,7 +57,7 @@ public class ContractService implements NeedsCleanup
 			response.put("position", position);
 			response.put("bid", bid);
 			response.put("nextPosition", SeatPosition.nextPlayer(position));
-			if (redeal(table.getCurrentBidOptions()))
+			if (redeal(table))
 			{
 				return MapUtil.mappifyMessage("The last bid was a fourth pass, redeal");
 			}		
@@ -249,14 +249,21 @@ public class ContractService implements NeedsCleanup
 			return true;		
 		return false;
 	}
-	private boolean redeal(List<ValidBidOption> bids)
+	private boolean redeal(Table table)
 	{
+		List<ValidBidOption> bids = table.getCurrentBidOptions();
 		if (bids.size() == 4 &&
 			bids.get(bids.size()-1).equals(ValidBidOption.PASS) && 
 			bids.get(bids.size()-2).equals(ValidBidOption.PASS) && 
 			bids.get(bids.size()-3).equals(ValidBidOption.PASS) &&
 			bids.get(bids.size()-4).equals(ValidBidOption.PASS)) 		
-			return true;		
+			{
+				SeatedPlayer dealer = table.getCurrentDealer();
+				table.cleanupAfterPlay();
+				table.setCurrentDealer(dealer);
+				tableService.deal(table);
+				return true;		
+			}
 		return false;
 	}
 }
