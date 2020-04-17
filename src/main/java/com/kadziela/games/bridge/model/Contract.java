@@ -1,12 +1,12 @@
 package com.kadziela.games.bridge.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-
+import java.util.Map;
 import org.springframework.util.Assert;
-
 import com.google.gson.Gson;
-import com.kadziela.games.bridge.NeedsCleanup;
 import com.kadziela.games.bridge.model.enumeration.BidSuit;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
@@ -36,12 +36,26 @@ public final class Contract
 	public boolean isRedoubled() {return redoubled;}
 	public BidSuit getSuit() {return suit;}
 	public int getLevel() {return level;}
-
-	public List<Bid> getBidsWithoutHands()
+	public Map<String,Object> getContractDetailsWithoutHands()
 	{
-		List<Bid> result = new ArrayList<Bid>();
-		for (Bid bid:bids) result.add(bid.getCopyWithoutHands());
-		return result;			
+		Map<String,Object> result = new HashMap<>();
+		result.put("id", getId());
+		result.put("declarer", declarer.getPosition());
+		result.put("vulnerable", isVulnerable());
+		result.put("doubled", isDoubled());
+		result.put("redoubled", isRedoubled());
+		result.put("suit", getSuit());
+		result.put("level", getLevel());
+		List<Map<String,String>> bidMaps = new ArrayList<>();
+		for (Bid bid:bids)
+		{
+			Map<String,String> bidMap = new HashMap<>();
+			bidMap.put("bid", bid.getBid().toString());
+			bidMap.put("bidder", bid.getSeatedPlayer().getPosition().toString());
+			bidMaps.add(bidMap);
+		}
+		result.put("bids", bidMaps);
+		return result;
 	}
 	
 	@Override

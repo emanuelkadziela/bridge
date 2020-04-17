@@ -65,8 +65,7 @@ public class ContractService implements NeedsCleanup
 			{
 				Contract contract = table.createNewContract();
 				((StringBuilder) response.get("message")).append("The bid was a third pass, the contract has been made");
-				response.put("contract",contract);
-				response.put("bids",contract.getBidsWithoutHands());
+				response.put("contract",contract.getContractDetailsWithoutHands());
 				response.put("nextPosition", SeatPosition.nextPlayer(contract.getDeclarer().getPosition()));
 				response.put("dummy", SeatPosition.getPartner(contract.getDeclarer().getPosition()));
 				response.put("dummyHand", table.getPlayerAtPosition(SeatPosition.getPartner(contract.getDeclarer().getPosition())).getHandCopy());
