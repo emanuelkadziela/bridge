@@ -40,6 +40,7 @@ import com.kadziela.games.bridge.model.Message;
 import com.kadziela.games.bridge.model.Player;
 import com.kadziela.games.bridge.model.SeatedPlayer;
 import com.kadziela.games.bridge.model.Table;
+import com.kadziela.games.bridge.model.enumeration.BidSuit;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 import com.kadziela.games.bridge.service.TableService;
@@ -78,39 +79,69 @@ public class BiddingIntegrationTest
 		 logger.info("bidding test: dealer = {}, tableId = {}",dealer,tableId);
 		 doRedeal(dealer, tableId, stompSession);
 		 doSimpleBid(dealer, tableId, stompSession);
+		 doComplexBid(dealer, tableId, stompSession);
+	 }
+	 private void doComplexBid(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 {
+		 logger.info("testing simple bid: dealer = {}, tableId = {}",dealer,tableId);
+		 Table table = tableService.findById(tableId);
+		 table.cleanupAfterPlay();
+		 table.setCurrentDealer(table.getPlayerAtPosition(dealer));
+		 SeatPosition position = dealer;
+		 bid(ValidBidOption.PASS, tableId, position, stompSession);
+		 bid(ValidBidOption.ONE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.ONE_DIAMONDS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.TWO_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.TWO_NO_TRUMP, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.DOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.REDOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.THREE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.DOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.REDOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+
+		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
+		 boolean redealMessage = false;
+		 for (Map<String,Object> map:messages)
+		 {
+			 if(((String) map.get("message")).contains("the contract has been made")) redealMessage = true;
+		 }
+		 assertTrue(redealMessage);
+		 logger.info("messages = {}", messages);
+		 logger.info("contract = {}", table.getCurrentContract());		 
+		 assertEquals(SeatPosition.nextPlayer(dealer), table.getCurrentContract().getDeclarer().getPosition());
+		 assertEquals(3, table.getCurrentContract().getLevel());
+		 assertEquals(BidSuit.CLUBS, table.getCurrentContract().getSuit());
+		 assertTrue(table.getCurrentContract().isRedoubled());
 	 }
 	 private void doSimpleBid(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
 		 logger.info("testing simple bid: dealer = {}, tableId = {}",dealer,tableId);
-		 Map<String,String> attributes = new HashMap<String,String>();
 		 SeatPosition position = dealer;
-		 attributes.put("tableId", tableId.toString());
-		 attributes.put("bid", ValidBidOption.PASS.toString());
-		 attributes.put("position", position.toString());
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
-		 position = SeatPosition.nextPlayer(position);		 
-		 attributes.put("bid", ValidBidOption.ONE_CLUBS.toString());
-		 attributes.put("position", position.toString());		 
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
-		 attributes.put("bid", ValidBidOption.PASS.toString());
-		 position = SeatPosition.nextPlayer(position);
-		 attributes.put("position", position.toString());		 
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
-		 attributes.put("bid", ValidBidOption.PASS.toString());
-		 position = SeatPosition.nextPlayer(position);
-		 attributes.put("position", position.toString());		 
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
-		 attributes.put("bid", ValidBidOption.PASS.toString());
-		 position = SeatPosition.nextPlayer(position);
-		 attributes.put("position", position.toString());		 
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
+		 bid(ValidBidOption.PASS, tableId, position, stompSession);
+		 bid(ValidBidOption.ONE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+
 		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
+		 boolean redealMessage = false;
+		 for (Map<String,Object> map:messages)
+		 {
+			 if(((String) map.get("message")).contains("the contract has been made")) redealMessage = true;
+		 }
+		 assertTrue(redealMessage);
 		 logger.info("messages = {}", messages);
+		 Table table = tableService.findById(tableId);
+		 assertEquals(SeatPosition.nextPlayer(dealer), table.getCurrentContract().getDeclarer().getPosition());
+		 assertEquals(1, table.getCurrentContract().getLevel());
+		 assertEquals(BidSuit.CLUBS, table.getCurrentContract().getSuit());
 	 }
 	 private void doRedeal(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
@@ -119,28 +150,12 @@ public class BiddingIntegrationTest
 		 logger.info("checking hands before four passes/redeal");
 		 checkHands(tableId);
 		 
-		 Map<String,String> attributes = new HashMap<String,String>();
 		 SeatPosition position = dealer;
-		 attributes.put("tableId", tableId.toString());
-		 attributes.put("bid", ValidBidOption.PASS.toString());
-		 attributes.put("position", position.toString());
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
-		 position = SeatPosition.nextPlayer(position);		 
-		 attributes.put("bid", ValidBidOption.PASS.toString());
-		 attributes.put("position", position.toString());		 
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
-		 attributes.put("bid", ValidBidOption.PASS.toString());
-		 position = SeatPosition.nextPlayer(position);
-		 attributes.put("position", position.toString());		 
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
-		 attributes.put("bid", ValidBidOption.PASS.toString());
-		 position = SeatPosition.nextPlayer(position);
-		 attributes.put("position", position.toString());		 
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
+		 bid(ValidBidOption.PASS, tableId, position, stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 
 		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
 		 logger.info("messages = {}", messages);
 		 boolean redealMessage = false;
@@ -150,7 +165,16 @@ public class BiddingIntegrationTest
 		 }
 		 assertTrue(redealMessage);
 		 logger.info("checking hands after four passes/redeal");
-		 checkHands(tableId);
+		 checkHands(tableId);		 
+	 }
+	 private void bid(ValidBidOption bid,Long tableId, SeatPosition position, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 {
+		 Map<String,String> attributes = new HashMap<String,String>();
+		 attributes.put("tableId", tableId.toString());
+		 attributes.put("bid", bid.toString());
+		 attributes.put("position", position.toString());
+		 stompSession.send("/app/contract/bid", attributes);
+		 Thread.sleep(1000);
 		 
 	 }
 	 private void checkHands(Long tableId)
