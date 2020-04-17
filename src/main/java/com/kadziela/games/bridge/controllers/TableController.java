@@ -112,11 +112,12 @@ public class TableController
 	    	
 	    	messagingTemplate.convertAndSend("/queue/private/"+playerName, MapUtil.mappifyMessage( 
     			String.format("you have successfully sat down at table %s in position %s",tableId,position)));
-
+	    	Table table = tableService.findById(Long.valueOf(tableId));
     		Map<String,Object> response = MapUtil.mappifyMessage(String.format("player %s has successfully sat down at table %s in position %s",playerName,tableId,position));
     		response.put("playerName", playerName);
     		response.put("tableId", tableId);
-    		response.put("position", position);    		
+    		response.put("position", position);
+    		response.put("players",table.getAllSeatedPlayers());
 	    	messagingTemplate.convertAndSend("/topic/table/"+tableId, response);
 	    	
 	    	if(open == false)
