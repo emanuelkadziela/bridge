@@ -36,40 +36,44 @@ public class ContractService implements NeedsCleanup
 	
 	@Autowired private TableService tableService;
 
-	public synchronized Map<String,Object> bid(SeatPosition position, ValidBidOption bid, Long tableId) throws IllegalArgumentException,IllegalStateException
+	public Map<String,Object> bid(SeatPosition position, ValidBidOption bid, Long tableId) throws IllegalArgumentException,IllegalStateException
 	{
-		Assert.notNull(position, "position cannot be null");
-		Assert.notNull(bid, "bid cannot be null");
-		Assert.notNull(tableId, "tableId cannot be null");
-		Table table = tableService.findById(Long.valueOf(tableId));
-		SeatedPlayer seatedPlayer = table.getPlayerAtPosition(position);
-		if(!ValidBidOption.validBid(bid, table.getCurrentBidOptions())) throw new IllegalArgumentException("Invalid bid");
-		SeatPosition shouldBid = table.getCurrentBids().isEmpty() ? table.getCurrentDealer().getPosition() : 
-			SeatPosition.nextPlayer(table.getCurrentBids().get(table.getCurrentBids().size()-1).getSeatedPlayer().getPosition());
-		if (!(position.equals(shouldBid))) throw new IllegalStateException(String.format("This bid was expected to come from %s , not %s",shouldBid,position));
-		Bid b = new Bid(seatedPlayer,bid);
-		table.addValidatedBid(b);
-		Map<String,Object> response = new HashMap<String,Object>();
-		response.put("message", new StringBuilder("Valid Bid Made. "));
-		response.put("position", position);
-		response.put("bid", bid);
-		response.put("nextPosition", SeatPosition.nextPlayer(position));
-		if (contractMade(table.getCurrentBidOptions()))
+		synchronized(tableId)
 		{
-			Contract contract = table.createNewContract();
-			((StringBuilder) response.get("message")).append("The bid was a third pass, the contract has been made");
-			response.put("contract",contract);
-			response.put("bids",contract.getBidsWithoutHands());
-			response.put("nextPosition", SeatPosition.nextPlayer(contract.getDeclarer().getPosition()));
-			response.put("dummy", SeatPosition.getPartner(contract.getDeclarer().getPosition()));
-			response.put("dummyHand", table.getPlayerAtPosition(SeatPosition.getPartner(contract.getDeclarer().getPosition())).getHandCopy());
+			logger.debug("Contract Service bid method, position = {}, bid = {}, tableId = {} ", position,bid,tableId);
+			Assert.notNull(position, "position cannot be null");
+			Assert.notNull(bid, "bid cannot be null");
+			Assert.notNull(tableId, "tableId cannot be null");
+			Table table = tableService.findById(Long.valueOf(tableId));
+			SeatedPlayer seatedPlayer = table.getPlayerAtPosition(position);
+			if(!ValidBidOption.validBid(bid, table.getCurrentBidOptions())) throw new IllegalArgumentException("Invalid bid");
+			SeatPosition shouldBid = table.getCurrentBids().isEmpty() ? table.getCurrentDealer().getPosition() : 
+				SeatPosition.nextPlayer(table.getCurrentBids().get(table.getCurrentBids().size()-1).getSeatedPlayer().getPosition());
+			if (!(position.equals(shouldBid))) throw new IllegalStateException(String.format("This bid was expected to come from %s , not %s",shouldBid,position));
+			Bid b = new Bid(seatedPlayer,bid);
+			table.addValidatedBid(b);
+			Map<String,Object> response = new HashMap<String,Object>();
+			response.put("message", new StringBuilder("Valid Bid Made. "));
+			response.put("position", position);
+			response.put("bid", bid);
+			response.put("nextPosition", SeatPosition.nextPlayer(position));
+			if (redeal(table.getCurrentBidOptions()))
+			{
+				return MapUtil.mappifyMessage("The last bid was a fourth pass, redeal");
+			}		
+			if (contractMade(table.getCurrentBidOptions()))
+			{
+				Contract contract = table.createNewContract();
+				((StringBuilder) response.get("message")).append("The bid was a third pass, the contract has been made");
+				response.put("contract",contract);
+				response.put("bids",contract.getBidsWithoutHands());
+				response.put("nextPosition", SeatPosition.nextPlayer(contract.getDeclarer().getPosition()));
+				response.put("dummy", SeatPosition.getPartner(contract.getDeclarer().getPosition()));
+				response.put("dummyHand", table.getPlayerAtPosition(SeatPosition.getPartner(contract.getDeclarer().getPosition())).getHandCopy());
+				return response;
+			}
 			return response;
 		}
-		if (redeal(table.getCurrentBidOptions()))
-		{
-			return MapUtil.mappifyMessage("The last bid was a fourth pass, redeal");
-		}		
-		return response;			
 	}
 	/**
 	 * Returns a map containing a breakdown of the scores by team, game, and over/under

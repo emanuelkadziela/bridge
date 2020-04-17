@@ -80,15 +80,23 @@ public class BiddingIntegrationTest
 		 attributes.put("tableId", tableId.toString());
 		 attributes.put("bid", ValidBidOption.PASS.toString());
 		 attributes.put("position", position.toString());
-		 position = SeatPosition.nextPlayer(position);
 		 stompSession.send("/app/contract/bid", attributes);
+		 Thread.sleep(1000);
+		 position = SeatPosition.nextPlayer(position);		 
 		 attributes.put("bid", ValidBidOption.PASS.toString());
 		 attributes.put("position", position.toString());		 
 		 stompSession.send("/app/contract/bid", attributes);
+		 Thread.sleep(1000);
 		 attributes.put("bid", ValidBidOption.PASS.toString());
 		 position = SeatPosition.nextPlayer(position);
 		 attributes.put("position", position.toString());		 
 		 stompSession.send("/app/contract/bid", attributes);
+		 Thread.sleep(1000);
+		 attributes.put("bid", ValidBidOption.PASS.toString());
+		 position = SeatPosition.nextPlayer(position);
+		 attributes.put("position", position.toString());		 
+		 stompSession.send("/app/contract/bid", attributes);
+		 Thread.sleep(1000);
 		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
 		 logger.info("messages = {}", messages);
 	 }
