@@ -71,7 +71,12 @@ public class TableService
 		logger.info("trying to seat player: {} at table: {} and position: {}. So far {} players are sitting at this table.",player,tableId,position,table.playersSitting());
 		if (table.playersSitting() >= 4) throw new IllegalStateException(String.format("this table (%s) already has 4 players sitting",tableId));
 		table.sitDown(position, player);
-		if (table.playersSitting() == 4) return false;			
+		if (table.playersSitting() == 4) 
+		{
+			logger.info("4 people sat down at table {}, dealing cards",tableId);
+			deal(table);
+			return false;			
+		}
 		return true;
 	}
 	public Table standUp(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException

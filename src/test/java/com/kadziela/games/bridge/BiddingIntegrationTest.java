@@ -75,7 +75,7 @@ public class BiddingIntegrationTest
 	 private void doBidding(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
 		 logger.info("bidding test: dealer = {}, tableId = {}",dealer,tableId);
-		 doRedeal(dealer, tableId, stompSession);
+		 //doRedeal(dealer, tableId, stompSession);
 		 doSimpleBid(dealer, tableId, stompSession);
 	 }
 	 private void doSimpleBid(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException

@@ -68,7 +68,7 @@ public class ContractService implements NeedsCleanup
 				response.put("contract",contract.getContractDetailsWithoutHands());
 				response.put("nextPosition", SeatPosition.nextPlayer(contract.getDeclarer().getPosition()));
 				response.put("dummy", SeatPosition.getPartner(contract.getDeclarer().getPosition()));
-				response.put("dummyHand", table.getPlayerAtPosition(SeatPosition.getPartner(contract.getDeclarer().getPosition())).getHandCopy());
+				response.put("dummyHand", table.getPlayerAtPosition(SeatPosition.getPartner(contract.getDeclarer().getPosition())).getPersistentHandCopy());
 				return response;
 			}
 			return response;
