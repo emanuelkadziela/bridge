@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -28,6 +29,8 @@ import org.springframework.web.socket.sockjs.client.SockJsClient;
 import org.springframework.web.socket.sockjs.client.Transport;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import com.kadziela.games.bridge.model.Message;
+import com.kadziela.games.bridge.util.CardUtils;
+import com.kadziela.games.bridge.util.HandGenerator;
 import com.kadziela.games.bridge.util.HandUtils;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -53,12 +56,19 @@ public class SuggestBidControllerTest
 	    StompSession stompSession = stompClient.connect(URL, new StompSessionHandlerAdapter() {}).get(1, TimeUnit.SECONDS);
 	
 	    stompSession.subscribe("/topic/bid/suggest", new MessageStompFrameHandler());
-	    stompSession.send("/app/bid/suggest", HandUtils.generateAShittyHand());
-	
+
+	    stompSession.send("/app/bid/suggest", CardUtils.convertFromEnumsToStrings(HandGenerator.generateAShittyHand()));
 	    Map message = completableFuture.get(10, TimeUnit.SECONDS);
 	    logger.info(message);
 	    assertNotNull(message);
 	    assertEquals("PASS",message.get("message"));
+
+	    completableFuture = new CompletableFuture<>();
+	    stompSession.send("/app/bid/suggest", HandGenerator.generateA1NTHand());
+	    message = completableFuture.get(10, TimeUnit.SECONDS);
+	    logger.info(message);
+	    assertNotNull(message);
+	    assertEquals("ONE_NO_TRUMP",message.get("message"));
 	}
 	 private List<Transport> createTransportClient() 
 	 {

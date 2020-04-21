@@ -11,7 +11,27 @@ public class Card implements Comparable<Card>
 	private Suit suit;
 
 	public Card(Rank rank, Suit suit) {this.rank = rank;this.suit = suit;}
-
+	public Card(String rnk, String st) throws IllegalArgumentException 
+	{
+		rank = Rank.getFromLetter(rnk);
+		suit = Suit.getFromLetter(st);
+		if (rank == null || suit == null) throw new IllegalArgumentException("rank and suit cannot be null");
+	}
+	public Card(String symbol) throws IllegalArgumentException 
+	{
+		if (symbol.length() == 2)
+		{
+			rank = Rank.getFromLetter(symbol.split("")[0]);
+			suit = Suit.getFromLetter(symbol.split("")[1]);
+		}
+		if (symbol.length() == 3)
+		{
+			rank = Rank.getFromLetter(symbol.split("")[0]+symbol.split("")[1]);
+			suit = Suit.getFromLetter(symbol.split("")[2]);
+		}
+		if (rank == null || suit == null) throw new IllegalArgumentException("rank and suit cannot be null");
+	}
+	
 	public Rank getRank() {return rank;}
 	public void setRank(Rank rank) {this.rank = rank;}
 	public Suit getSuit() {return suit;}

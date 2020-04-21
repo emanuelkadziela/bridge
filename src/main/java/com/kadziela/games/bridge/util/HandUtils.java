@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.util.Assert;
@@ -72,16 +71,12 @@ public class HandUtils
 		}
 		return ValidBidOption.valueOf("ONE_"+suit.toString());
 	}
-	public static final List<Card> generateAShittyHand()
+	public static final ValidBidOption suggestFirstOpeningBid5CMBM(List<String> hand) throws IllegalArgumentException
 	{
-		List<Card> result = new ArrayList<>();
-		for (int i=0;i<13;i++)
-		{
-			result.add(new Card(Rank.values()[i],Suit.values()[i%4]));
-		}
-		return result;
+		Assert.isTrue(hand.size() == 13,"the hand must contain exactly 13 cards");
+		List<Card> cards = CardUtils.convertFromStringsToEnums(hand);
+		return suggestFirstOpeningBid5CMBM(cards);
 	}
-
 	private static final Map<Suit, List<Card>> mappifyCollection(Collection<Card> input)
 	{
 		return input.stream().collect(Collectors.groupingBy(Card::getSuit));

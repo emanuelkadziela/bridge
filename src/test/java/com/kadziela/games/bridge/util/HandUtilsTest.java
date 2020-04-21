@@ -57,7 +57,7 @@ public class HandUtilsTest
 	@Test
 	void testBidPass()
 	{
-		List<Card> cards = HandUtils.generateAShittyHand();
+		List<Card> cards = HandGenerator.generateAShittyHand();
 		logger.debug("hand = {}", cards);
 		assertEquals(10, HandUtils.getHighCountPoints(cards));
 		assertEquals(0, HandUtils.getDistributionPoints(cards));

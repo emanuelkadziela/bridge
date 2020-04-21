@@ -19,9 +19,9 @@ public class SuggestBidController
 	
 	@MessageMapping("/bid/suggest")
 	@SendTo("/topic/bid/suggest")
-	public Map<String,Object> suggest(List<Card> cards)
+	public Map<String,Object> suggest(List<String> symbols)
 	{
-		logger.debug(String.format("Suggest Bid Controller received the request with this hand %s", cards));
-    	return MapUtil.mappifyMessage(HandUtils.suggestFirstOpeningBid5CMBM(cards)); 
+		logger.debug(String.format("Suggest Bid Controller received the request with this hand %s", symbols));		
+    	return MapUtil.mappifyMessage(HandUtils.suggestFirstOpeningBid5CMBM(symbols)); 
 	}
 }
