@@ -2,6 +2,7 @@ package com.kadziela.games.bridge.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,8 +55,12 @@ public class HandUtils
 		Assert.isTrue(hand.size() == 13,"the hand must contain exactly 13 cards");
 		int totalPoints = getTotalPointsDeduped(hand);
 		logger.debug("{} points in the hand",totalPoints);
-		if (totalPoints < 13) return ValidBidOption.PASS;
 		Map<Suit, List<Card>> cardMap = mappifyCollection(hand);
+		if (totalPoints < 13) 
+		{
+			if (totalPoints > 7) return weakThree(cardMap);
+			return ValidBidOption.PASS;
+		}
 		if (isBalanced(cardMap))
 		{
 			logger.debug("balanced hand",totalPoints);
@@ -97,6 +102,23 @@ public class HandUtils
 		}
 		return true;
 	}
+	private static final ValidBidOption weakThree(Map<Suit, List<Card>> cardMap)
+	{
+		for (Suit suit:cardMap.keySet())
+		{
+			List<Card> suited = cardMap.get(suit);
+			if (suited.size() > 6)
+			{
+				if (getHighCountPoints(suited) > 1) 
+				{
+					Collections.sort(suited);
+					if (suited.get(suited.size()-1).getRank().ordinal() > Rank.JACK.ordinal() && suited.get(suited.size()-2).getRank().ordinal() > Rank.NINE.ordinal())
+						return ValidBidOption.valueOf("THREE_"+suit.toString());
+				}
+			}
+		}
+		return ValidBidOption.PASS;
+	}
 	private static final BidSuit findSuitFor5CMBM(Map<Suit, List<Card>> cardMap)
 	{
 		//check for longest 5+ card major, return the longer one, if equal return spades (equal 5 CMs should be bid down the line, spades then hearts)
@@ -105,7 +127,7 @@ public class HandUtils
 			//I have at least 5 spades
 			if (cardMap.get(Suit.HEARTS) != null && cardMap.get(Suit.HEARTS).size() > 4)
 			{
-				//I also have at least 5 hearts, so return the longer suit, and if equal, return speades
+				//I also have at least 5 hearts, so return the longer suit, and if equal, return spades
 				if(cardMap.get(Suit.SPADES).size() >= cardMap.get(Suit.HEARTS).size()) return BidSuit.SPADES;
 				return BidSuit.HEARTS;
 			}

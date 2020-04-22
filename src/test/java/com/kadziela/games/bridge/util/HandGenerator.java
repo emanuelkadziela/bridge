@@ -23,4 +23,8 @@ public class HandGenerator
 	{
 		return Arrays.asList("AC","AD","AH","AS","JC","10D","10H","10S","9C","8C","9D","9H","9S");
 	}
+	public static final List<String> generateAWK3Hand()
+	{
+		return Arrays.asList("KC","QC","JC","9C","8C","7C","6C","10D","9D","10H","9H","10S","9S");
+	}
 }
