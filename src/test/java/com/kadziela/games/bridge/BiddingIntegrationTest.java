@@ -44,6 +44,8 @@ import com.kadziela.games.bridge.model.enumeration.BidSuit;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 import com.kadziela.games.bridge.service.TableService;
+import com.kadziela.games.bridge.util.CardUtils;
+import com.kadziela.games.bridge.util.HandUtils;
 import com.kadziela.games.bridge.util.TestUtils;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -80,6 +82,47 @@ public class BiddingIntegrationTest
 		 doRedeal(dealer, tableId, stompSession);
 		 doSimpleBid(dealer, tableId, stompSession);
 		 doComplexBid(dealer, tableId, stompSession);
+		 doSuggestedBid(dealer, tableId, stompSession);
+	 }
+	 private void doSuggestedBid(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 {
+		 logger.info("testing suggesed bid: dealer = {}, tableId = {}",dealer,tableId);
+		 Table table = tableService.findById(tableId);
+		 table.cleanupAfterPlay();
+		 table.setCurrentDealer(table.getPlayerAtPosition(dealer));
+		 table.deal();
+		 SeatPosition position = dealer;
+		 List<String> hand = CardUtils.convertFromEnumsToStrings(table.getPlayerAtPosition(position).getHandCopy());
+		 int consecutivePasses = 0;
+		 boolean expectRedeal = true;
+		 while(consecutivePasses < 4)
+		 {
+			 logger.info("bidding with this hand: {} ",hand);
+			 ValidBidOption suggestedBid = HandUtils.suggestFirstOpeningBid5CMBM(hand);
+			 logger.info("suggested bid: {} ",suggestedBid);
+			 bid(suggestedBid, tableId, position, stompSession);
+			 if (!suggestedBid.equals(ValidBidOption.PASS))
+			 {
+				 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+				 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+				 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+				 consecutivePasses = 10;
+				 expectRedeal = false;
+			 }
+			 consecutivePasses++;
+			 position = SeatPosition.nextPlayer(position);
+			 hand = CardUtils.convertFromEnumsToStrings(table.getPlayerAtPosition(position).getHandCopy());			 
+		 }
+		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
+		 boolean redealMessage = false;
+		 boolean contractMessage = false;
+		 for (Map<String,Object> map:messages)
+		 {
+			 if(((String) map.get("message")).contains("redeal")) redealMessage = true;
+			 if(((String) map.get("message")).contains("the contract has been made")) contractMessage = true;
+		 }
+		 if (expectRedeal) assertTrue(redealMessage);
+		 else assertTrue(contractMessage);
 	 }
 	 private void doComplexBid(SeatPosition dealer,Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
