@@ -69,6 +69,13 @@ public class SuggestBidControllerTest
 	    logger.info(message);
 	    assertNotNull(message);
 	    assertEquals("ONE_NO_TRUMP",message.get("message"));
+
+	    completableFuture = new CompletableFuture<>();
+	    stompSession.send("/app/bid/suggest", HandGenerator.generateAWK3Hand());
+	    message = completableFuture.get(10, TimeUnit.SECONDS);
+	    logger.info(message);
+	    assertNotNull(message);
+	    assertEquals("THREE_CLUBS",message.get("message"));
 	}
 	 private List<Transport> createTransportClient() 
 	 {
