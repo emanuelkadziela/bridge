@@ -36,7 +36,7 @@ public class PlayController
 	@MessageMapping("/play/card")	
 	public void playCard(Map<String,String> attributes)
 	{
-		logger.debug(String.format("Play Controller received the request to play a card with these attributes", attributes));
+		logger.debug("Play Controller received the request to play a card with these attributes {}", attributes);
 	    try
 	    {	
 			Assert.notNull(attributes, "the map of attributes cannot be null");

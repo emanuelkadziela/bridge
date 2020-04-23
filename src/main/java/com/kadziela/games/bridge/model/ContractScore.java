@@ -63,13 +63,13 @@ public final class ContractScore
 			madeLedger = eastLedger;
 			missedLedger = northLedger;
 		}
-		if (over < 0) calculateContractMissed(over,missedLedger);
+		if (over < 0) calculateContractMissed(-over,missedLedger);
 		else calculateContractMade(over, level, madeLedger);
 		addHonors(contract.getSuit());
 	}
 	private void calculateContractMade(int over,int level, Map<ScoreLineItem,Integer> ledger) 
 	{
-		logger.info(String.format("%s made the contract with %s overtricks ",contract.getDeclarer(),over));
+		logger.info(String.format("%s made the contract with %s overtricks ",contract.getDeclarer().getPosition(),over));
 		switch (contract.getSuit()) 
 		{
 			case NO_TRUMP:
@@ -130,7 +130,7 @@ public final class ContractScore
 	}
 	private void calculateContractMissed(int under, Map<ScoreLineItem,Integer> ledger) 
 	{
-		logger.info(String.format("%s made the contract with %s undertricks ",contract.getDeclarer(),under));
+		logger.info(String.format("%s missed the contract with %s undertricks ",contract.getDeclarer().getPosition(),under));
 		if (contract.isVulnerable() && contract.isRedoubled()) 
 		{
 			ledger.put(ScoreLineItem.UNDERTRICK_V_REDOUBLED_FIRST, 1);
