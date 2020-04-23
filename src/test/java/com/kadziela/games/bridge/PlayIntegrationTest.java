@@ -102,11 +102,11 @@ public class PlayIntegrationTest
 	 {
 		 logger.info("simple bid: dealer = {}, tableId = {}",dealer,tableId);
 		 SeatPosition position = dealer;
-		 bid(ValidBidOption.PASS, tableId, position, stompSession);
-		 bid(ValidBidOption.ONE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position, stompSession);
+		 TestUtils.bid(ValidBidOption.ONE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
 
 		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
 		 boolean redealMessage = false;
@@ -120,15 +120,6 @@ public class PlayIntegrationTest
 		 assertEquals(SeatPosition.nextPlayer(dealer), table.getCurrentContract().getDeclarer().getPosition());
 		 assertEquals(1, table.getCurrentContract().getLevel());
 		 assertEquals(BidSuit.CLUBS, table.getCurrentContract().getSuit());
-	 }
-	 private void bid(ValidBidOption bid,Long tableId, SeatPosition position, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
-	 {
-		 Map<String,String> attributes = new HashMap<String,String>();
-		 attributes.put("tableId", tableId.toString());
-		 attributes.put("bid", bid.toString());
-		 attributes.put("position", position.toString());
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);		
 	 }
 	 private SeatPosition sitDown(Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {

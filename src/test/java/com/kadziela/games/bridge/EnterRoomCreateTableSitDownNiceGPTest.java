@@ -36,6 +36,8 @@ import org.springframework.web.socket.sockjs.client.Transport;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import com.google.gson.Gson;
+import com.kadziela.games.bridge.handlers.ErrorStompFrameHandler;
+import com.kadziela.games.bridge.handlers.QueueStompFrameHandler;
 import com.kadziela.games.bridge.model.Message;
 import com.kadziela.games.bridge.model.Player;
 import com.kadziela.games.bridge.model.Table;
@@ -51,26 +53,20 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 	 private int port;
 	 private String URL;
 	 
-	 @Autowired TableService tableService;
-
-	 private BlockingQueue<Map<String,Object>> messageQueue = new LinkedBlockingQueue<Map<String,Object>>();
-	 
+	 @Autowired private TableService tableService;
+	 @Autowired private QueueStompFrameHandler queueStompFrameHandler; 
+	 @Autowired private ErrorStompFrameHandler errorStompFrameHandler; 
+	 	 	 
 	 @Test
 	 public void testCreateGameEndpoint() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException 
 	 {
-		URL = "ws://localhost:" + port + "/kadziela-bridge-websocket";		
-		WebSocketStompClient stompClient = new WebSocketStompClient(new SockJsClient(createTransportClient()));
-		stompClient.setMessageConverter(new MappingJackson2MessageConverter());		
-		StompSession stompSession = stompClient.connect(URL, new StompSessionHandlerAdapter() {}).get(1, TimeUnit.SECONDS);
-
-		stompSession.subscribe("/topic/errors/", new ErrorStompFrameHandler());
-		
+		StompSession stompSession = TestUtils.setupTest(URL, port,errorStompFrameHandler,queueStompFrameHandler);
 		Long tableId = enterRoomAndCreateTable(stompSession);	    
 		sitDown(tableId,stompSession);		
 	 }
 	 private void sitDown(Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
-			stompSession.subscribe("/topic/table/"+tableId, new QueueStompFrameHandler());
+			stompSession.subscribe("/topic/table/"+tableId, queueStompFrameHandler);
 			sitPlayer("North","NORTH",String.valueOf(tableId),stompSession);
 			sitPlayer("South","SOUTH",String.valueOf(tableId),stompSession);
 			sitPlayer("East","EAST",String.valueOf(tableId),stompSession);
@@ -87,7 +83,7 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 			attributes.put("tableId", table);
 			attributes.put("position", position);
 			stompSession.send("/app/table/sitDown", attributes);
-			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
+			List<Map<String,Object>> messages = queueStompFrameHandler.getMessages();
 			logger.info("Player {} attempted to sit in the {} seat at table {}, the /topic/table/{} channel received the following messages: {} ",name,position,table,table,messages);
 			assertNotNull(messages);
 			Map<String,Object> mm = messages.get(0);
@@ -100,14 +96,13 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 	 }
 	 private Long enterRoomAndCreateTable(StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {			
-			stompSession.subscribe("/topic/room", new QueueStompFrameHandler());			
-			enterPlayer("North", stompSession);
-			enterPlayer("South", stompSession);
-			enterPlayer("East", stompSession);
-			enterPlayer("West", stompSession);			
-			Long externalId = System.currentTimeMillis();
+		 	TestUtils.roomEnterPlayer("North", stompSession,queueStompFrameHandler);
+		 	TestUtils.roomEnterPlayer("South", stompSession,queueStompFrameHandler);
+		 	TestUtils.roomEnterPlayer("East", stompSession,queueStompFrameHandler);
+		 	TestUtils.roomEnterPlayer("West", stompSession,queueStompFrameHandler);
+		 	Long externalId = System.currentTimeMillis();
 			stompSession.send("/app/table/openNewWithExternalId", externalId);
-			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
+			List<Map<String,Object>> messages = queueStompFrameHandler.getMessages();
 			assertNotNull(messages);
 			Map<String,Object> map = messages.get(0);						
 			logger.info("Attempted to open a new table with external id {}, this message was sent to the /topic/room channel: {} ",externalId,map);
@@ -115,64 +110,5 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 			Table table = tableService.findByExternalId(externalId);
 			logger.info("table = {} ", table);
 			return table.getId();
-	 }
-	 private void enterPlayer(String name, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
-	 {
-			stompSession.send("/app/room/enter", name);
-			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
-			logger.info("Player {} attempted to enter the room, this message was sent to the /topic/room channel: {} ",name,messages);
-			assertNotNull(messages);
-			Map<String,Object> map = messages.get(0);
-			List players = (List) map.get("players");
-			assertNotNull(players);
-			String name2 = null;
-			for (Object player:players)
-			{
-				name2 = (String) ((Map) player).get("name");
-				if (name2.contentEquals(name)) break;
-			}
-			assertEquals(name,name2);		 
-	 }
-	 private List<Transport> createTransportClient() 
-	 {
-	 	List<Transport> transports = new ArrayList<>(1);
-        transports.add(new WebSocketTransport(new StandardWebSocketClient()));
-        return transports;
-	 }
-	 private class QueueStompFrameHandler implements StompFrameHandler 
-	 {
-	 	@Override
-		public Type getPayloadType(StompHeaders stompHeaders) 
-		{
-		    logger.info("stompHeaders: {}",stompHeaders.toString());
-		    return Map.class;
-		}
-		@Override
-		public void handleFrame(StompHeaders stompHeaders, Object o)
-		{
-			logger.info("handleFrame message payload: {} ",(Map) o);
-			try 
-			{
-				messageQueue.offer((Map) o, 5, TimeUnit.SECONDS);			
-			}
-			catch(InterruptedException ie) 
-			{
-				logger.error(ie);
-			}
-		}
-	 }
-	 private class ErrorStompFrameHandler implements StompFrameHandler 
-	 {
-	 	@Override
-		public Type getPayloadType(StompHeaders stompHeaders) 
-		{
-		    logger.info(stompHeaders.toString());
-		    return Map.class;
-		}
-		@Override
-		public void handleFrame(StompHeaders stompHeaders, Object o) 
-		{
-			logger.error((Map) o);
-		}
 	 }
 }

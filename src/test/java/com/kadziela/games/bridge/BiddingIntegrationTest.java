@@ -100,12 +100,12 @@ public class BiddingIntegrationTest
 			 logger.info("bidding with this hand: {} ",hand);
 			 ValidBidOption suggestedBid = HandUtils.suggestFirstOpeningBid5CMBM(hand);
 			 logger.info("suggested bid: {} ",suggestedBid);
-			 bid(suggestedBid, tableId, position, stompSession);
+			 TestUtils.bid(suggestedBid, tableId, position, stompSession);
 			 if (!suggestedBid.equals(ValidBidOption.PASS))
 			 {
-				 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-				 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-				 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+				 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+				 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+				 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
 				 consecutivePasses = 10;
 				 expectRedeal = false;
 			 }
@@ -131,23 +131,23 @@ public class BiddingIntegrationTest
 		 table.cleanupAfterPlay();
 		 table.setCurrentDealer(table.getPlayerAtPosition(dealer));
 		 SeatPosition position = dealer;
-		 bid(ValidBidOption.PASS, tableId, position, stompSession);
-		 bid(ValidBidOption.ONE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.ONE_DIAMONDS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.TWO_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.TWO_NO_TRUMP, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.DOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.REDOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.THREE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.DOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.REDOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position, stompSession);
+		 TestUtils.bid(ValidBidOption.ONE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.ONE_DIAMONDS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.TWO_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.TWO_NO_TRUMP, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.DOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.REDOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.THREE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.DOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.REDOUBLE, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
 
 		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
 		 boolean redealMessage = false;
@@ -167,11 +167,11 @@ public class BiddingIntegrationTest
 	 {
 		 logger.info("testing simple bid: dealer = {}, tableId = {}",dealer,tableId);
 		 SeatPosition position = dealer;
-		 bid(ValidBidOption.PASS, tableId, position, stompSession);
-		 bid(ValidBidOption.ONE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position, stompSession);
+		 TestUtils.bid(ValidBidOption.ONE_CLUBS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
 
 		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
 		 boolean redealMessage = false;
@@ -194,10 +194,10 @@ public class BiddingIntegrationTest
 		 checkHands(tableId);
 		 
 		 SeatPosition position = dealer;
-		 bid(ValidBidOption.PASS, tableId, position, stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
-		 bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position, stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
+		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
 		 
 		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
 		 logger.info("messages = {}", messages);
@@ -209,16 +209,6 @@ public class BiddingIntegrationTest
 		 assertTrue(redealMessage);
 		 logger.info("checking hands after four passes/redeal");
 		 checkHands(tableId);		 
-	 }
-	 private void bid(ValidBidOption bid,Long tableId, SeatPosition position, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
-	 {
-		 Map<String,String> attributes = new HashMap<String,String>();
-		 attributes.put("tableId", tableId.toString());
-		 attributes.put("bid", bid.toString());
-		 attributes.put("position", position.toString());
-		 stompSession.send("/app/contract/bid", attributes);
-		 Thread.sleep(1000);
-		 
 	 }
 	 private void checkHands(Long tableId)
 	 {
