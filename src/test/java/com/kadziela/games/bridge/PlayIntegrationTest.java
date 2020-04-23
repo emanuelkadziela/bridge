@@ -36,6 +36,8 @@ import org.springframework.web.socket.sockjs.client.Transport;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import com.google.gson.Gson;
+import com.kadziela.games.bridge.handlers.ErrorStompFrameHandler;
+import com.kadziela.games.bridge.handlers.QueueStompFrameHandler;
 import com.kadziela.games.bridge.model.Card;
 import com.kadziela.games.bridge.model.Message;
 import com.kadziela.games.bridge.model.Player;
@@ -57,26 +59,20 @@ public class PlayIntegrationTest
 	 private int port;
 	 private String URL;
 	
-	 @Autowired TableService tableService;
-	 
-	 private BlockingQueue<Map<String,Object>> messageQueue = new LinkedBlockingQueue<Map<String,Object>>();
+	 @Autowired private TableService tableService;
+	 @Autowired private QueueStompFrameHandler queueStompFrameHandler; 
+	 @Autowired private ErrorStompFrameHandler errorStompFrameHandler; 
 	 
 	 @Test
 	 public void testCreateGameEndpoint() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException 
 	 {
-		URL = "ws://localhost:" + port + "/kadziela-bridge-websocket";		
-		WebSocketStompClient stompClient = new WebSocketStompClient(new SockJsClient(createTransportClient()));
-		stompClient.setMessageConverter(new MappingJackson2MessageConverter());		
-		StompSession stompSession = stompClient.connect(URL, new StompSessionHandlerAdapter() {}).get(1, TimeUnit.SECONDS);
-
-		stompSession.subscribe("/topic/errors/", new ErrorStompFrameHandler());
-		
-		Long tableId = enterRoomAndCreateTable(stompSession);	    
-		SeatPosition dealer = sitDown(tableId,stompSession);
-		logger.info("the dealer is {}",dealer);
-		doSimpleBid(dealer, tableId, stompSession);
-		Map<SeatPosition,Map<Suit,List<Card>>> cards = getCardMap(tableService.findById(tableId));
-		logger.info("cards by position and suit = {} ", cards);
+		 StompSession stompSession = TestUtils.setupTest(URL, port,errorStompFrameHandler,queueStompFrameHandler);	
+		 Long tableId = TestUtils.put4PlayersInRoomAndTable(stompSession, errorStompFrameHandler, queueStompFrameHandler, tableService, "NPlay","Splay","EPlay","WPlay");
+		 Table table = tableService.findById(tableId);
+		 assertNotNull(table);
+		 doSimpleBid(table.getCurrentDealer().getPosition(), tableId, stompSession);
+		 Map<SeatPosition,Map<Suit,List<Card>>> cards = getCardMap(tableService.findById(tableId));
+		 logger.info("cards by position and suit = {} ", cards);
 	 }
 	 private Map<SeatPosition, Map<Suit, List<Card>>> getCardMap(Table table) 
 	 {
@@ -108,7 +104,7 @@ public class PlayIntegrationTest
 		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
 		 TestUtils.bid(ValidBidOption.PASS, tableId, position = SeatPosition.nextPlayer(position), stompSession);
 
-		 List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
+		 List<Map<String,Object>> messages = queueStompFrameHandler.getMessages();
 		 boolean redealMessage = false;
 		 for (Map<String,Object> map:messages)
 		 {
@@ -120,103 +116,5 @@ public class PlayIntegrationTest
 		 assertEquals(SeatPosition.nextPlayer(dealer), table.getCurrentContract().getDeclarer().getPosition());
 		 assertEquals(1, table.getCurrentContract().getLevel());
 		 assertEquals(BidSuit.CLUBS, table.getCurrentContract().getSuit());
-	 }
-	 private SeatPosition sitDown(Long tableId, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
-	 {
-			stompSession.subscribe("/topic/table/"+tableId, new QueueStompFrameHandler());
-			Map<String,String> attributes = new HashMap<String,String>();
-			attributes.put("playerName", "NPlay");
-			attributes.put("tableId", String.valueOf(tableId));
-			attributes.put("position", "NORTH");
-			stompSession.send("/app/table/sitDown", attributes);
-			attributes.put("playerName", "SPlay");
-			attributes.put("position", "SOUTH");
-			stompSession.send("/app/table/sitDown", attributes);
-			attributes.put("playerName", "EPlay");
-			attributes.put("position", "EAST");
-			stompSession.send("/app/table/sitDown", attributes);
-			attributes.put("playerName", "WPlay");
-			attributes.put("position", "WEST");
-			stompSession.send("/app/table/sitDown", attributes);
-			
-			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
-			logger.info("sat daown 4 players at one table, here are the messages: {}",messages);
-			assertEquals(4,tableService.findById(tableId).playersSitting());
-			int dealerSelectedMessageCount = 0;
-			SeatPosition dealer = null;
-			for (Map map:messages)
-			{
-				String message = (String) map.get("message");
-				if (message != null && message.contains("current dealer is ")) 
-				{
-					dealerSelectedMessageCount++;
-					dealer = SeatPosition.valueOf((String) map.get("dealer"));
-				}
-			}
-			assertEquals(1, dealerSelectedMessageCount);
-			assertNotNull(dealer);
-			return dealer;
-	 }
-	 private Long enterRoomAndCreateTable(StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
-	 {			
-			stompSession.subscribe("/topic/room", new QueueStompFrameHandler());
-			
-			stompSession.send("/app/room/enter", "NPlay");
-			stompSession.send("/app/room/enter", "SPlay");
-			stompSession.send("/app/room/enter", "EPlay");
-			stompSession.send("/app/room/enter", "WPlay");
-						
-			Long externalId = System.currentTimeMillis();
-			stompSession.send("/app/table/openNewWithExternalId", externalId);
-			List<Map<String,Object>> messages = TestUtils.queueToList(messageQueue);
-			assertNotNull(messages);
-			Map<String,Object> map = messages.get(0);						
-			logger.info("Attempted to open a new table with external id {}, this message was sent to the /topic/room channel: {} ",externalId,map);
-			assertNotNull(map);
-			Table table = tableService.findByExternalId(externalId);
-			logger.info("table = {} ", table);
-			return table.getId();
-	 }
-	 private List<Transport> createTransportClient() 
-	 {
-	 	List<Transport> transports = new ArrayList<>(1);
-        transports.add(new WebSocketTransport(new StandardWebSocketClient()));
-        return transports;
-	 }
-	 private class QueueStompFrameHandler implements StompFrameHandler 
-	 {
-	 	@Override
-		public Type getPayloadType(StompHeaders stompHeaders) 
-		{
-		    logger.info("stompHeaders: {}",stompHeaders.toString());
-		    return Map.class;
-		}
-		@Override
-		public void handleFrame(StompHeaders stompHeaders, Object o)
-		{
-			logger.info("handleFrame message payload: {} ",(Map) o);
-			try 
-			{
-				messageQueue.offer((Map) o, 5, TimeUnit.SECONDS);			
-			}
-			catch(InterruptedException ie) 
-			{
-				logger.error(ie);
-			}
-		}
-	 }
-	 private class ErrorStompFrameHandler implements StompFrameHandler 
-	 {
-	 	@Override
-		public Type getPayloadType(StompHeaders stompHeaders) 
-		{
-		    logger.info(stompHeaders.toString());
-		    return Map.class;
-		}
-		@Override
-		public void handleFrame(StompHeaders stompHeaders, Object o) 
-		{
-			logger.error((Map) o);
-		}
 	 }
 }

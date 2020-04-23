@@ -138,7 +138,7 @@ public class TestUtils
 		assertTrue(((String) mm.get("message")).contains("successfully sat down"));
 		return messages;
 	 }
-	 public static final void sit4PlayersDown(Long tableId, StompSession stompSession, QueueStompFrameHandler queueStompFrameHandler, String ... names) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 public static final SeatPosition sit4PlayersDown(Long tableId, StompSession stompSession, QueueStompFrameHandler queueStompFrameHandler, String ... names) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
 			TestUtils.sitPlayer(names[0],"NORTH",String.valueOf(tableId),stompSession,queueStompFrameHandler);
 			TestUtils.sitPlayer(names[1],"SOUTH",String.valueOf(tableId),stompSession,queueStompFrameHandler);
@@ -147,11 +147,24 @@ public class TestUtils
 			Map<String,Object> mm = messages.get(1);
 			assertNotNull(mm.get("cardsBySeat"));			
 			mm = messages.get(2);
-			assertNotNull(mm.get("dealer"));						
+			assertNotNull(mm.get("dealer"));
+			int dealerSelectedMessageCount = 0;
+			SeatPosition dealer = null;
+			for (Map<String,Object> map:messages)
+			{
+				String message = (String) map.get("message");
+				if (message != null && message.contains("current dealer is ")) 
+				{
+					dealerSelectedMessageCount++;
+					dealer = SeatPosition.valueOf((String) map.get("dealer"));
+				}
+			}
+			assertEquals(1, dealerSelectedMessageCount);
+			assertNotNull(dealer);
+			return dealer;
 	 }
-	 public static final Long put4PlayersInRoomAndTable(String URL, int port, ErrorStompFrameHandler errorStompFrameHandler,QueueStompFrameHandler queueStompFrameHandler, TableService tableService, String ... names) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 public static final Long put4PlayersInRoomAndTable(StompSession stompSession, ErrorStompFrameHandler errorStompFrameHandler,QueueStompFrameHandler queueStompFrameHandler, TableService tableService, String ... names) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
-		 StompSession stompSession = TestUtils.setupTest(URL, port,errorStompFrameHandler,queueStompFrameHandler);	
 		 TestUtils.roomEnterPlayers(stompSession, queueStompFrameHandler, names);
 		 Long tableId = TestUtils.createTable(stompSession,queueStompFrameHandler,tableService);	    
 		 TestUtils.sit4PlayersDown(tableId, stompSession, queueStompFrameHandler, names);	

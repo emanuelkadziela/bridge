@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.messaging.simp.stomp.StompSession;
+
 import com.kadziela.games.bridge.handlers.ErrorStompFrameHandler;
 import com.kadziela.games.bridge.handlers.QueueStompFrameHandler;
 import com.kadziela.games.bridge.service.TableService;
@@ -26,6 +28,7 @@ public class EnterRoomCreateTableSitDownNiceGPTest
 	 @Test
 	 public void testCreateGameEndpoint() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException 
 	 {
-		 TestUtils.put4PlayersInRoomAndTable(URL, port, errorStompFrameHandler, queueStompFrameHandler, tableService, "North","South","East","West");
+		 StompSession stompSession = TestUtils.setupTest(URL, port,errorStompFrameHandler,queueStompFrameHandler);	
+		 TestUtils.put4PlayersInRoomAndTable(stompSession, errorStompFrameHandler, queueStompFrameHandler, tableService, "North","South","East","West");
 	 }
 }
