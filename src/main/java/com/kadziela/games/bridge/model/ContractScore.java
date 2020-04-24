@@ -208,6 +208,19 @@ public final class ContractScore
 			}
 		}
 	}
+	public void addRubberBonus (SeatPosition position, boolean fast)
+	{
+		if (position.equals(SeatPosition.NORTH))
+		{
+			if (fast) northLedger.put(ScoreLineItem.RUBBER_FAST, 1);
+			else northLedger.put(ScoreLineItem.RUBBER_SLOW, 1);
+		}
+		else
+		{
+			if (fast) eastLedger.put(ScoreLineItem.RUBBER_FAST, 1);
+			else eastLedger.put(ScoreLineItem.RUBBER_SLOW, 1);			
+		}
+	}
 	public Map<ScoreLineItem, Integer> getNorthLedger() {return new HashMap<ScoreLineItem,Integer>(northLedger);}
 	public Map<ScoreLineItem, Integer> getEastLedger() {return new HashMap<ScoreLineItem,Integer>(eastLedger);}
 	public Long getId() {return id;}	
