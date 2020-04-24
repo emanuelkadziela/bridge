@@ -191,7 +191,7 @@ public class Table implements NeedsCleanup
 	@Override public void cleanupAfterGame(Long tableId) 
 	{
 		bids.clear();
-		currentDealer = null;
+		//currentDealer = null;
 		currentContract = null;
 		tricks.clear();
 		partialTrick.clear();		
@@ -201,7 +201,7 @@ public class Table implements NeedsCleanup
 	{
 		players.clear();
 		bids.clear();
-		currentDealer = null;
+		//currentDealer = null;
 		currentContract = null;
 		tricks.clear();
 		partialTrick.clear();		
@@ -212,7 +212,7 @@ public class Table implements NeedsCleanup
 	public void cleanupAfterPlay() 
 	{
 		bids.clear();
-		currentDealer = null;
+		//currentDealer = null;
 		currentContract = null;
 		tricks.clear();
 		partialTrick.clear();

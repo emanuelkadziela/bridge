@@ -223,6 +223,8 @@ public class TableController
 			else
 			{
 				logger.debug(String.format("dealing at table %s ", table));
+				table.setCurrentDealer(table.getPlayerAtPosition(SeatPosition.nextPlayer(table.getCurrentDealer().getPosition())));
+				logger.debug(String.format("new dealer is %s ", table.getCurrentDealer().getPosition()));				
 				tableService.deal(table);
 				for(SeatedPlayer player : table.getAllSeatedPlayers())
 				{

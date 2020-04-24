@@ -82,7 +82,7 @@ public class TestUtils
 		stompSession.subscribe("/topic/room", queueStompFrameHandler);			
 		return stompSession;
 	 }
-	 public static final void roomEnterPlayer(String name, StompSession stompSession,QueueStompFrameHandler queueStompFrameHandler) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 public static final void roomEnterPlayer(String name, StompSession stompSession,QueueStompFrameHandler queueStompFrameHandler, ErrorStompFrameHandler errorStompFrameHandler) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
 		stompSession.send("/app/room/enter", name);
 		List<Map<String,Object>> messages = queueStompFrameHandler.getMessages();
@@ -97,12 +97,13 @@ public class TestUtils
 			name2 = player.get("name");
 			if (name2.contentEquals(name)) break;
 		}
-		assertEquals(name,name2);		 
+		assertEquals(name,name2);
+		stompSession.subscribe("/queue/private/"+name, errorStompFrameHandler);					
 	 }
-	 public static final void roomEnterPlayers(StompSession stompSession, QueueStompFrameHandler queueStompFrameHandler, String ... names) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 public static final void roomEnterPlayers(StompSession stompSession, QueueStompFrameHandler queueStompFrameHandler, ErrorStompFrameHandler errorStompFrameHandler, String ... names) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
 		 Stream.of(names).forEach(name -> {
-			try {roomEnterPlayer(name,stompSession,queueStompFrameHandler);} 
+			try {roomEnterPlayer(name,stompSession,queueStompFrameHandler,errorStompFrameHandler);} 
 			catch (URISyntaxException | InterruptedException | ExecutionException | TimeoutException e) 
 			{
 				logger.error("exception occurred while entering players into the room ",e);
@@ -168,7 +169,7 @@ public class TestUtils
 	 }
 	 public static final Long put4PlayersInRoomAndTable(StompSession stompSession, ErrorStompFrameHandler errorStompFrameHandler,QueueStompFrameHandler queueStompFrameHandler, TableService tableService, String ... names) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
 	 {
-		 TestUtils.roomEnterPlayers(stompSession, queueStompFrameHandler, names);
+		 TestUtils.roomEnterPlayers(stompSession, queueStompFrameHandler,errorStompFrameHandler, names);
 		 Long tableId = TestUtils.createTable(stompSession,queueStompFrameHandler,tableService);	    
 		 TestUtils.sit4PlayersDown(tableId, stompSession, queueStompFrameHandler, names);	
 		 return tableId;

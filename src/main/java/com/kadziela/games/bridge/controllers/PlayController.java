@@ -28,6 +28,8 @@ public class PlayController
 	@Autowired private SimpMessageSendingOperations messagingTemplate;
 	@Autowired private TableService tableService;
 	@Autowired private ContractService contractService;
+	@Autowired private TableController tableController;
+	
 
 	/**
 	 * Plays a card from a player
@@ -65,7 +67,8 @@ public class PlayController
 			{
 				logger.info(String.format("13 tricks collected, calculating the contract score"));
 				Map<String,Object> scoreBreakdown = contractService.calculateScore(table.getCurrentContract(), table.getTricks(), tableService.getPersistentHands(Long.valueOf(tableId)),table);
-				messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),MapUtil.mappifyMessage("score",scoreBreakdown));				
+				messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),MapUtil.mappifyMessage("score",scoreBreakdown));	
+				tableController.deal(table.getId());
 			}
 	    }
 	    catch (IllegalArgumentException iae)
