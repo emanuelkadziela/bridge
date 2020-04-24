@@ -64,7 +64,7 @@ public class PlayController
 			if (table.getTricks().size() == 13)
 			{
 				logger.info(String.format("13 tricks collected, calculating the contract score"));
-				Map<String,String> scoreBreakdown = contractService.calculateScore(table.getCurrentContract(), table.getTricks(), tableService.getPersistentHands(Long.valueOf(tableId)),table);
+				Map<String,Object> scoreBreakdown = contractService.calculateScore(table.getCurrentContract(), table.getTricks(), tableService.getPersistentHands(Long.valueOf(tableId)),table);
 				messagingTemplate.convertAndSend(String.format("/topic/table/%s",tableId),MapUtil.mappifyMessage("score",scoreBreakdown));				
 			}
 	    }

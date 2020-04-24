@@ -75,42 +75,51 @@ public class ContractService implements NeedsCleanup
 		}
 	}
 	/**
-	 * Returns a map containing a breakdown of the scores by team, game, and over/under
+	 * Returns a map containing a breakdown of the scores by team, game, and over/under, along with score ledgers
 	 * @param contract - the current contract
 	 * @param tricks actual tricks from the game that just ended
 	 * @param hands actual hands that the players were dealt (originally)
 	 * @param table the table where play occurred
 	 * @return a map of string keys and integer values representing the score
 	 */
-	public Map<String,String> calculateScore(Contract contract, List<Trick> tricks, Map<SeatPosition,Collection<Card>> hands,Table table) throws IllegalArgumentException,IllegalStateException
+	public Map<String,Object> calculateScore(Contract contract, List<Trick> tricks, Map<SeatPosition,Collection<Card>> hands,Table table) throws IllegalArgumentException,IllegalStateException
 	{
-		Assert.notNull(table, "table cannot be null");
-		Assert.notNull(contract, "contract cannot be null");
-		Assert.notNull(contract, "tricks cannot be null");
-		Assert.notNull(contract, "hands cannot be null");
-		ContractScore current = new ContractScore(contract, tricks, hands);
-		List<ContractScore> scoreList = scores.get(table.getId());		
-		if (scoreList == null) 
+		synchronized(table)
 		{
-			scoreList = new CopyOnWriteArrayList<ContractScore>();
-			scores.put(table.getId(), scoreList);
+			Assert.notNull(table, "table cannot be null");
+			Assert.notNull(contract, "contract cannot be null");
+			Assert.notNull(contract, "tricks cannot be null");
+			Assert.notNull(contract, "hands cannot be null");
+			ContractScore current = new ContractScore(contract, tricks, hands);
+			List<ContractScore> scoreList = scores.get(table.getId());		
+			if (scoreList == null) 
+			{
+				scoreList = new CopyOnWriteArrayList<ContractScore>();
+				scores.put(table.getId(), scoreList);
+			}
+			List<Map<String,Object>> rawScoreData = new CopyOnWriteArrayList<>();
+			addRawScoreToList(rawScoreData, current);
+			if (!scoreList.isEmpty()) scoreList.stream().forEach(score -> addRawScoreToList(rawScoreData, score));
+			scoreList.add(current);		
+			SeatPosition game = game(table);
+			boolean rubber = false;
+			if (game != null)
+			{
+				rubber = rubberOrVul(table,current,game);
+				table.cleanupAfterGame(table.getId());
+			}		
+			Map<String,String> scoreBreakdown = convertScore(table.getId());
+			table.cleanupAfterPlay();		
+			if (rubber)
+			{
+				table.cleanupAfterRubber(table.getId());
+				cleanupAfterRubber(table.getId());			
+			}
+			Map<String,Object> result = new ConcurrentHashMap<>();
+			result.put("rawScoreData",rawScoreData);
+			result.put("scoreSummary",scoreBreakdown);
+			return result;
 		}
-		scoreList.add(current);
-		SeatPosition game = game(table);
-		boolean rubber = false;
-		if (game != null)
-		{
-			rubber = rubberOrVul(table,current,game);
-			table.cleanupAfterGame(null);
-		}		
-		Map<String,String> scoreBreakdown = convertScore(table.getId());
-		table.cleanupAfterPlay();		
-		if (rubber)
-		{
-			table.cleanupAfterRubber(null);
-			cleanupAfterRubber(null);			
-		}
-		return scoreBreakdown;
 	}
 	public void cleanupAfterPlay() 
 	{
@@ -124,7 +133,21 @@ public class ContractService implements NeedsCleanup
 			score.setClosed(true);
 		}
 	}
-	public void cleanupAfterRubber(Long tableId) {scores.get(tableId).clear();}
+	public void cleanupAfterRubber(Long tableId) 
+	{
+		if (scores != null && scores.get(tableId) != null)
+		{
+			scores.get(tableId).clear();
+		}
+	}
+	private void addRawScoreToList(List<Map<String,Object>> list, ContractScore rawScore)
+	{
+		Map<String,Object> score = new ConcurrentHashMap<>();
+		score.put("scoreId", rawScore.getId());
+		score.put("scoreNorthSouthLedger", rawScore.getNorthLedger());
+		score.put("scoreEastWestLedger", rawScore.getEastLedger());
+		list.add(score);		
+	}
 	private SeatPosition game(Table table)
 	{
 		//check if game has been reached by either team (>=100 points under)

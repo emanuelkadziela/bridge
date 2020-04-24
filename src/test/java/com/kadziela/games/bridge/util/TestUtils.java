@@ -29,8 +29,11 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import com.kadziela.games.bridge.EnterRoomCreateTableSitDownNiceGPTest;
 import com.kadziela.games.bridge.handlers.ErrorStompFrameHandler;
 import com.kadziela.games.bridge.handlers.QueueStompFrameHandler;
+import com.kadziela.games.bridge.model.Card;
 import com.kadziela.games.bridge.model.Table;
+import com.kadziela.games.bridge.model.enumeration.Rank;
 import com.kadziela.games.bridge.model.enumeration.SeatPosition;
+import com.kadziela.games.bridge.model.enumeration.Suit;
 import com.kadziela.games.bridge.model.enumeration.ValidBidOption;
 import com.kadziela.games.bridge.service.TableService;
 
@@ -169,5 +172,15 @@ public class TestUtils
 		 Long tableId = TestUtils.createTable(stompSession,queueStompFrameHandler,tableService);	    
 		 TestUtils.sit4PlayersDown(tableId, stompSession, queueStompFrameHandler, names);	
 		 return tableId;
+	 }
+	 public static final void playCard(Card card, Long tableId, SeatPosition position, StompSession stompSession) throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+	 {
+		Map<String,String> attributes = new HashMap<String,String>();
+		attributes.put("suit", card.getSuit().toString());
+		attributes.put("rank", card.getRank().toString());
+		attributes.put("tableId", tableId.toString());
+		attributes.put("position", position.toString());
+		stompSession.send("/app/play/card", attributes);
+		Thread.sleep(1000);		 
 	 }
 }
