@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.util.Assert;
 import com.google.gson.Gson;
 import com.kadziela.games.bridge.model.enumeration.BidSuit;
@@ -140,32 +142,17 @@ public final class Contract
 		Bid lastNormal = null;
 		for (int i = 0; i<bids.size(); i++)
 		{
-			Bid bid = bids.get(i);
-			if (bid.getBid().equals(ValidBidOption.REDOUBLE)) continue;
-			if (bid.getBid().equals(ValidBidOption.DOUBLE)) continue;
-			if (bid.getBid().equals(ValidBidOption.PASS)) continue;
-			lastNormal = bid;			
+			Bid bid = bids.get(i);			
+			if(ValidBidOption.isNormal(bid.getBid())) lastNormal = bid;			
 		}
 		suit = ValidBidOption.getSuit(lastNormal.getBid());
 		level = ValidBidOption.getLevel(lastNormal.getBid());
 		declarer = lastNormal.getSeatedPlayer();
 		//reset the declarer if the partner of the winning player was the first to introduce the bid suit
-		List<Bid> winningSuitBids = new ArrayList<>();
-		for (Bid bid:bids)
-		{
-			if (bid.getBid().equals(ValidBidOption.REDOUBLE)) continue;
-			if (bid.getBid().equals(ValidBidOption.DOUBLE)) continue;
-			if (bid.getBid().equals(ValidBidOption.PASS)) continue;
-			//match the suits
-			BidSuit bs = ValidBidOption.getSuit(bid.getBid());
-			if (bs.equals(suit))
-			{				
-				//if the suits match, add all bids in that suit made by the partnership to the list
-				if(bid.getSeatedPlayer().getPosition().equals(declarer.getPosition()) || 
-					bid.getSeatedPlayer().getPosition().equals(SeatPosition.getPartner(declarer.getPosition())))
-				winningSuitBids.add(bid);
-			}
-		}
+		List<Bid> winningSuitBids = new ArrayList<>();		
+		winningSuitBids = bids.stream().filter(bid -> ValidBidOption.isNormal(bid.getBid())).filter(bid -> ValidBidOption.getSuit(bid.getBid()).equals(suit))
+			.filter(bid -> (bid.getSeatedPlayer().getPosition().equals(declarer.getPosition()) || bid.getSeatedPlayer().getPosition().equals(SeatPosition.getPartner(declarer.getPosition()))))
+			.collect(Collectors.toList());		
 		//make the first person to bid the winning suit the declarer
 		if (winningSuitBids.size() > 0) 
 		{			

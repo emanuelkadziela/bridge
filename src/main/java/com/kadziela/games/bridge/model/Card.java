@@ -33,9 +33,7 @@ public class Card implements Comparable<Card>
 	}
 	
 	public Rank getRank() {return rank;}
-	public void setRank(Rank rank) {this.rank = rank;}
 	public Suit getSuit() {return suit;}
-	public void setSuite(Suit suit) {this.suit = suit;}
 	@Override
 	public int hashCode() {
 		final int prime = 31;

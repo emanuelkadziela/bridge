@@ -90,8 +90,9 @@ public enum ValidBidOption
 		for(int i=prior.size()-1; i > -1; i--)
 		{
 			ValidBidOption vbo = prior.get(i);
-			if (vbo.ordinal() < DOUBLE.ordinal()) return vbo;
+			if (ValidBidOption.isNormal(vbo)) return vbo;
 		}
 		return null;
-	}	
+	}
+	public static boolean isNormal(ValidBidOption bid) {return bid.ordinal() < DOUBLE.ordinal();}
 }
