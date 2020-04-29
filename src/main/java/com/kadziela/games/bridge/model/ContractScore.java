@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
@@ -168,15 +170,7 @@ public final class ContractScore
 		{
 			for (SeatPosition key: hands.keySet())
 			{
-				int aces = 0;
-				for (Card card:hands.get(key))
-				{
-					if(card.getRank().equals(Rank.ACE))
-					{
-						aces++;
-					}
-				}
-				if (aces == 4)
+				if(hands.get(key).stream().filter(card -> card.getRank().equals(Rank.ACE)).collect(Collectors.toList()).size() == 4)				
 				{
 					if (key.equals(SeatPosition.NORTH) || key.equals(SeatPosition.SOUTH)) northLedger.put(ScoreLineItem.HONORS_HIGH, 1);
 					else eastLedger.put(ScoreLineItem.HONORS_HIGH, 1);
@@ -187,14 +181,7 @@ public final class ContractScore
 		{
 			for (SeatPosition key: hands.keySet())
 			{
-				int highCards = 0;
-				for (Card card:hands.get(key))
-				{
-					if(Suit.valueOf(suit.toString()).equals(card.getSuit()) && card.getRank().ordinal() > Rank.NINE.ordinal())
-					{
-						highCards++;
-					}
-				}
+				int highCards = hands.get(key).stream().filter(card -> (Suit.valueOf(suit.toString()).equals(card.getSuit()) && card.getRank().ordinal() > Rank.NINE.ordinal())).collect(Collectors.toList()).size();
 				if (highCards == 5)
 				{
 					if (key.equals(SeatPosition.NORTH) || key.equals(SeatPosition.SOUTH)) northLedger.put(ScoreLineItem.HONORS_HIGH, 1);
