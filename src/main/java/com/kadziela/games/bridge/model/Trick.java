@@ -1,6 +1,8 @@
 package com.kadziela.games.bridge.model;
 
+import java.util.Comparator;
 import java.util.NavigableSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -50,7 +52,7 @@ public final class Trick
 	public PlayedCard getSecond() {return second;}
 	public PlayedCard getThird() {return third;}
 	public PlayedCard getFourth() {return fourth;}
-	public BidSuit getTrump() {return trump;}
+	public BidSuit getTrump() {return trump;}	
 	public PlayedCard getWinner() throws IllegalArgumentException,IllegalStateException
 	{
 		PlayedCard bestLed = getBestInSuit(leader.getCard().getSuit());
@@ -72,16 +74,8 @@ public final class Trick
 	}	
 	private PlayedCard getBestInSuit(Suit suit)
 	{
-		PlayedCard result = null;
-		for (PlayedCard card:internal)
-		{
-			if (card.getCard().getSuit().equals(suit))
-			{
-				if (result == null) result = card;
-				else if (card.getCard().getRank().ordinal() > result.getCard().getRank().ordinal()) result = card;
-			}
-		}
-		return result;
+		Optional<PlayedCard> opt = internal.stream().filter(card -> card.getCard().getSuit().equals(suit)).max(Comparator.naturalOrder());
+		return opt.isPresent()?opt.get():null;
 	}
 	@Override public String toString() {return new Gson().toJson(this);}
 	@Override
