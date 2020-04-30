@@ -64,64 +64,79 @@ public class TableService
 	 * @throws IllegalArgumentException - if the table cannot be found, or a player already sits in the position requested, etc.
 	 * @throws IllegalStateException if the table is already full and more players are trying to sit, etc.
 	 */
-	public synchronized boolean sitDown(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException
+	public boolean sitDown(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException
 	{
-		Table table = tables.get(tableId);
-		Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
-		logger.info("trying to seat player: {} at table: {} and position: {}. So far {} players are sitting at this table.",player,tableId,position,table.playersSitting());
-		if (table.playersSitting() >= 4) throw new IllegalStateException(String.format("this table (%s) already has 4 players sitting",tableId));
-		table.sitDown(position, player);
-		if (table.playersSitting() == 4) 
+		synchronized(tableId)
 		{
-			logger.info("4 people sat down at table {}, dealing cards",tableId);
-			deal(table);
-			return false;			
+			Table table = tables.get(tableId);
+			Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
+			logger.info("trying to seat player: {} at table: {} and position: {}. So far {} players are sitting at this table.",player,tableId,position,table.playersSitting());
+			if (table.playersSitting() >= 4) throw new IllegalStateException(String.format("this table (%s) already has 4 players sitting",tableId));
+			table.sitDown(position, player);
+			if (table.playersSitting() == 4) 
+			{
+				logger.info("4 people sat down at table {}, dealing cards",tableId);
+				deal(table);
+				return false;			
+			}
+			return true;
 		}
-		return true;
 	}
 	public Table standUp(Player player,Long tableId, SeatPosition position) throws IllegalArgumentException, IllegalStateException
 	{
-		Table table = tables.get(tableId);
-		Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
-		table.standUp(position);
-		return table;
+		synchronized(tableId)
+		{
+			Table table = tables.get(tableId);
+			Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
+			table.standUp(position);
+			return table;
+		}
 	}
 	public Table findById(Long tableId) {return tables.get(tableId);}
 	public Table findByExternalId(Long externalId) {return tablesByExternalId.get(externalId);}
 	public void deal(Table table)
 	{
-		Assert.notNull(table, "Cannot deal on a null table");
-		logger.debug(String.format("dealing on table %s",table));
-		table.deal();		
+		synchronized(table)
+		{
+			Assert.notNull(table, "Cannot deal on a null table");
+			logger.debug(String.format("dealing on table %s",table));
+			table.deal();		
+		}
 	}
 	public Map<Card,SeatPosition> chooseFirstDealer(Table table) throws IllegalArgumentException
 	{
-		Assert.notNull(table, "Cannot choose a dealer on a null table");
-		List<Card> shuffledDeck = table.getDeck().getShuffled();
-		Card north = shuffledDeck.get(0);
-		logger.debug(String.format("NORTH card is %s, ", north));
-		Card east = shuffledDeck.get(1);
-		logger.debug(String.format("EAST card is %s", east));
-		Card south = shuffledDeck.get(2);
-		logger.debug(String.format("SOUTH card is %s", south));
-		Card west = shuffledDeck.get(3);
-		logger.debug(String.format("WEST card is %s", west));
-		logger.debug("sorting ... ");
-		NavigableMap<Card,SeatPosition> map = new TreeMap<Card,SeatPosition>();
-		map.put(north,SeatPosition.NORTH);
-		map.put(east,SeatPosition.EAST);
-		map.put(south,SeatPosition.SOUTH);
-		map.put(west,SeatPosition.WEST);
-		Map.Entry<Card, SeatPosition> lastEntry = map.lastEntry();
-		logger.debug(String.format("the best card is %s, so the dealer is %s",lastEntry.getKey(),lastEntry.getValue()));
-		table.setCurrentDealer(table.getPlayerAtPosition(lastEntry.getValue()));
-		return map;
+		synchronized(table)
+		{
+			Assert.notNull(table, "Cannot choose a dealer on a null table");
+			List<Card> shuffledDeck = table.getDeck().getShuffled();
+			Card north = shuffledDeck.get(0);
+			logger.debug(String.format("NORTH card is %s, ", north));
+			Card east = shuffledDeck.get(1);
+			logger.debug(String.format("EAST card is %s", east));
+			Card south = shuffledDeck.get(2);
+			logger.debug(String.format("SOUTH card is %s", south));
+			Card west = shuffledDeck.get(3);
+			logger.debug(String.format("WEST card is %s", west));
+			logger.debug("sorting ... ");
+			NavigableMap<Card,SeatPosition> map = new TreeMap<Card,SeatPosition>();
+			map.put(north,SeatPosition.NORTH);
+			map.put(east,SeatPosition.EAST);
+			map.put(south,SeatPosition.SOUTH);
+			map.put(west,SeatPosition.WEST);
+			Map.Entry<Card, SeatPosition> lastEntry = map.lastEntry();
+			logger.debug(String.format("the best card is %s, so the dealer is %s",lastEntry.getKey(),lastEntry.getValue()));
+			table.setCurrentDealer(table.getPlayerAtPosition(lastEntry.getValue()));
+			return map;
+		}
 	}
 	public Trick playCard(Card card, Long tableId, SeatPosition position) throws IllegalArgumentException
 	{
-		Table table = tables.get(tableId);
-		Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
-		return table.playCard(new PlayedCard(card,position));
+		synchronized(tableId)
+		{
+			Table table = tables.get(tableId);
+			Assert.notNull(table, String.format("%s does not match any extant table ids ",tableId));
+			return table.playCard(new PlayedCard(card,position));
+		}
 	}
 	public Map<SeatPosition,Collection<Card>> getCurrentHands(Long tableId) throws IllegalArgumentException
 	{
